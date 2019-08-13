@@ -1,7 +1,7 @@
 import pyb
 import uasyncio
 
-from userapp.uvacbot.ui.heartbeat import Heartbeat
+from uvacbot.ui.heartbeat import Heartbeat
 
 async def killer(timespan):
     await uasyncio.sleep(timespan)

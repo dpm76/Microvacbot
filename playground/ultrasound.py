@@ -1,9 +1,8 @@
 import utime
 from pyb import Pin
 
-from userapp.uvacbot.sensor.ultrasound import Ultrasound
+from uvacbot.sensor.ultrasound import Ultrasound
 
-		
 if __name__ == '__main__':
 
     GPIO_TRIGGER = Pin.board.D0

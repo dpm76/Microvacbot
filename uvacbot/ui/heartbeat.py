@@ -41,7 +41,7 @@ class Heartbeat(object):
                 await uasyncio.sleep_ms(700)
 
             else:
-	
+
                 self._led.on()
                 await uasyncio.sleep_ms(500)
                 self._led.off()

@@ -26,7 +26,7 @@ class Ultrasound(object):
 
         utime.sleep(1)
 
-		
+
     def read(self):
         '''
         Measures distance

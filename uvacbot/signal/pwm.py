@@ -4,7 +4,7 @@ class Pwm(object):
 
     def __init__(self, pin, timer, channel, freq):
     
-    	self._pin = pin
+        self._pin = pin
         self._timer = pyb.Timer(timer, freq=freq)
         self._channel = self._timer.channel(channel, pyb.Timer.PWM, pin=self._pin, pulse_width=0)
         
