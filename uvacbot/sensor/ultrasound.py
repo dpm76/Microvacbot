@@ -3,6 +3,9 @@ from pyb import Pin
 
 
 class Ultrasound(object):
+    '''
+    Controls an ultrasound distance sensor
+    '''
 
     PULSE2CM = 17241.3793 # cm/s
     MAX_RANGE = 3500 # cm
