@@ -1,4 +1,4 @@
-from motor import Motor
+from uvacbot.engine.motor import Motor
 
 class Driver(object):
     '''
@@ -33,6 +33,8 @@ class Driver(object):
         self._direction = 0.0
         
         self._mode = Driver.MODE_DRIVE
+        
+        self.stop()
 
     
     def stop(self):
@@ -40,10 +42,7 @@ class Driver(object):
         Stop the motors
         '''
         
-        self.setNeutral()
-        
-        self._leftMotor.stop()
-        self._rightMotor.stop()
+        self.setMotionVector(0.0, 0.0)
         
     
     def setThrottle(self, throttle):
@@ -76,13 +75,6 @@ class Driver(object):
         @return: Direction range is [-100, 100], where negative values mean left and positive ones mean right.
         '''
         return self._direction
-    
-
-    def setNeutral(self):
-        '''
-        Set the motion to neutral (stopped). Throttle and direction will be zero. 
-        '''
-        self.setMotionVector(0.0, 0.0)
 
 
     def setMotionVector(self, throttle, direction):
@@ -132,17 +124,13 @@ class Driver(object):
                 
                 if self._direction >= 0.0:
                     
-                    leftThrottle = self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV1) \
-                        * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
-                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV2) \
-                        * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+                    leftThrottle  = self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV1) * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV2) * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
                     
                 else:
                                 
-                    leftThrottle = self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV2) \
-                        * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
-                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV1) \
-                        * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+                    leftThrottle =  self._throttle + self._throttle * (self._direction/Driver.DIRECTION_DIV2) * ((modThrottle - Driver.THROTTLE_RANGE_THRESHOLD_1) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
+                    rightThrottle = self._throttle - self._throttle * (self._direction/Driver.DIRECTION_DIV1) * ((Driver.THROTTLE_RANGE_THRESHOLD_2 - modThrottle) / Driver.THROTTLE_RANGE_THRESHOLD_DIFF)
     
             else:
                 
@@ -161,8 +149,8 @@ class Driver(object):
     
         else:
             
-            self._leftMotor.setNeutralThrottle()
-            self._rightMotor.setNeutralThrottle()
+            self._leftMotor.stop()
+            self._rightMotor.stop()
             
             
     def _setMotionVectorOnRotateMode(self):
@@ -180,8 +168,8 @@ class Driver(object):
             
         else:
             
-            self._leftMotor.setNeutralThrottle()
-            self._rightMotor.setNeutralThrottle()
+            self._leftMotor.stop()
+            self._rightMotor.stop()
                
             
     def setMode(self, mode):
@@ -205,3 +193,13 @@ class Driver(object):
         '''
         
         return self._mode
+        
+        
+    def cleanup(self):
+        '''
+        Releases the used resources
+        '''
+
+        self.stop()
+        self._leftMotor.cleanup()
+        self._rightMotor.cleanup()

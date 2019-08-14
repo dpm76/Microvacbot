@@ -32,7 +32,8 @@ class Motor(object):
         '''
         Finishes and releases the resources
         '''
-    
+        
+        self.stop()
         self._pwm.cleanup()
         self._reversePin.off()
         
@@ -54,7 +55,7 @@ class Motor(object):
             if modThrottle > 100.0:
                 modThrottle = 100.0
             
-            duty = MIN_DUTY + modThrottle * DIFF_DUTY / 100.0 
+            duty = Motor.MIN_DUTY + modThrottle * Motor.DIFF_DUTY / 100.0 
             
             self._pwm.setDutyPerc(duty)
                 
