@@ -62,7 +62,7 @@ class Ultrasound(object):
             pulseEnd = utime.ticks_us()
 
             pulseDuration = utime.ticks_diff(pulseEnd, pulseStart) # as microseconds
-            distSample = pulseDuration * Ultrasound.PULSE2CM / 1e6 #cm
+            distSample = pulseDuration * Ultrasound.PULSE2CM / 1e6 # cm
 
             if distSample < Ultrasound.MAX_RANGE:
                 dist += distSample
@@ -76,7 +76,7 @@ class Ultrasound(object):
 
     def cleanup(self):
         '''
-        Frees ressources
+        Frees resources
         '''
 
         #self._trigger.cleanup()

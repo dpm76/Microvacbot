@@ -1,6 +1,7 @@
 import sys
 sys.path.append("/flash/userapp")
 
+import pyb
 from uvacbot.engine.motor import Motor
 from uvacbot.engine.driver import Driver
 

@@ -7,7 +7,6 @@ class Motor(object):
     Controls a motor
     '''
 
-
     PWM_FREQ = 50.0
     MIN_DUTY = 40.0
     MAX_DUTY = 90.0

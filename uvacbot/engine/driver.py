@@ -1,5 +1,3 @@
-from uvacbot.engine.motor import Motor
-
 class Driver(object):
     '''
     Controls a motor set
@@ -14,7 +12,7 @@ class Driver(object):
     THROTTLE_RANGE_THRESHOLD_2 = 75.0
     THROTTLE_RANGE_THRESHOLD_DIFF = THROTTLE_RANGE_THRESHOLD_2 - THROTTLE_RANGE_THRESHOLD_1 
 
-    #Direction divisors to set the wheels spining at diferent speeds in order to turn the robot.  
+    #Direction divisors to set the wheels spinning at different speeds in order to turn the robot.  
     DIRECTION_DIV1 = 50.0
     DIRECTION_DIV2 = 200.0
 
