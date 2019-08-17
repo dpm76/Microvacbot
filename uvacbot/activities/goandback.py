@@ -22,13 +22,43 @@ class GoAndBackActivity(object):
             Object to drive the robot
         @param distanceSensor: @see uvacbot.sensor.ultrasound.Ultrasound
             Distance sensor
-        @param backTime: Seconds meanwhile the robot drives back
+        @param backTime: Seconds meanwhile the robot drives back        
         '''
         
         self._motorDriver = motorDriver
         self._distanceSensor = distanceSensor
         self._backTime = backTime
         self._running = False
+        
+        self._obstacleLed = None
+        
+        loop = uasyncio.get_event_loop()
+        loop.create_task(self.run())
+    
+
+    def setObstacleLed(self, obstacleLed):
+        '''
+        Set a led to indicate an obstacle was found
+        
+        @param obstacleLed: Led to indicate an obstacle was found
+        @return The instance itself
+        '''
+
+        self._obstacleLed = obstacleLed
+        
+        return self
+        
+    
+    def _obstacleLedOn(self):
+        
+        if self._obstacleLed != None:
+            self._obstacleLed.on()
+            
+            
+    def _obstacleLedOff(self):
+        
+        if self._obstacleLed != None:
+            self._obstacleLed.off()
     
         
     def cleanup(self):
@@ -37,18 +67,26 @@ class GoAndBackActivity(object):
         '''
         
         self._motorDriver.cleanup()
-        self._distanceSensor.cleanup()
+        self._distanceSensor.cleanup()        
+        self._obstacleLedOff()
+    
+    
+    def isRunning(self):
+        '''
+        Reports the activity is currently running
+        @return: True or False depending the activity is running or not
+        '''
+        
+        return self._running
     
     
     def start(self):
         '''
         Starts the activity
         '''
-        
-        self._running = True
-        loop = uasyncio.get_event_loop()
-        loop.create_task(self.run())
-        
+
+        self._running = True        
+                
         
     def stop(self):
         '''
@@ -71,18 +109,28 @@ class GoAndBackActivity(object):
         
         try:
             
-            while self._running:
+            while True:
             
-                distance = self._distanceSensor.read()
-                if distance > GoAndBackActivity.DISTANCE_TO_OBSTACLE and self._motorDriver.getThrottle() != GoAndBackActivity.DRIVE_THROTTLE:
-                    self._motorDriver.setThrottle(GoAndBackActivity.DRIVE_THROTTLE)
-                else:
-                    self._motorDriver.stop()
-                    await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
-                    self._motorDriver.setThrottle(-GoAndBackActivity.SLOW_THROTTLE)
-                    await uasyncio.sleep(self._backTime)
-                    self._motorDriver.stop()
-                    
+                if self._running:
+                
+                    distance = self._distanceSensor.read()
+                    if distance < GoAndBackActivity.DISTANCE_TO_OBSTACLE:
+                        
+                        self._obstacleLedOn()
+                            
+                        self._motorDriver.stop()
+                        await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
+                        self._motorDriver.setThrottle(-GoAndBackActivity.SLOW_THROTTLE)
+                        await uasyncio.sleep(self._backTime)
+                        self._motorDriver.stop()
+                        
+                        self._obstacleLedOff()
+                        
+                    elif self._motorDriver.getThrottle() != GoAndBackActivity.DRIVE_THROTTLE:
+                        
+                        self._motorDriver.setThrottle(GoAndBackActivity.DRIVE_THROTTLE)
+    
+                        
                 await uasyncio.sleep_ms(GoAndBackActivity.DELAY_TIME)
                 
         finally:
