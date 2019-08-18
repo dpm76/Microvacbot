@@ -179,7 +179,7 @@ class Driver(object):
         
         if self._mode != mode:
             
-            self.setNeutral()
+            self.stop()
             self._mode = mode
     
     
