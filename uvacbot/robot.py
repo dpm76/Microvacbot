@@ -50,7 +50,7 @@ class Robot(object):
     
     def finish(self):
         '''
-        finalishes the execution 
+        finalizes the execution 
         '''
         
         self._running = False
@@ -70,7 +70,6 @@ class Robot(object):
     
     def _runActivity(self):
         
-        print("run activity")
         self._heartbeat.setState(Heartbeat.States.Active)
         if self._activity != None:
             self._activity.start()
@@ -78,7 +77,6 @@ class Robot(object):
         
     def _stopActivity(self):
         
-        print("stop activity")
         self._heartbeat.setState(Heartbeat.States.Waiting)
         if self._activity != None:
             self._activity.stop()        
@@ -89,7 +87,6 @@ class Robot(object):
         # First at all try to debounce
         utime.sleep_ms(100)
         if pyb.Switch().value():
-            print("toggle activity")
             if self._activity == None or self._activity.isRunning():
                 
                 self._stopActivity()

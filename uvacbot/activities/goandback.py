@@ -10,7 +10,7 @@ class GoAndBackActivity(object):
     DRIVE_THROTTLE =  80.0
     SLOW_THROTTLE = 50.0
     
-    DISTANCE_TO_OBSTACLE = 15 # cm
+    DISTANCE_TO_OBSTACLE = 20 # cm
     AFTER_STOP_TIME = 1 #seconds
     DELAY_TIME = 500 # milliseconds
     
