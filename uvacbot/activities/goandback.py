@@ -7,10 +7,10 @@ class GoAndBackActivity(object):
     then go back a while and try to go forward again
     '''
     
-    DRIVE_THROTTLE =  80.0
-    SLOW_THROTTLE = 50.0
+    DRIVE_THROTTLE = 50.0
+    SLOW_THROTTLE = 25.0
     
-    DISTANCE_TO_OBSTACLE = 20 # cm
+    DISTANCE_TO_OBSTACLE = 40 # cm
     AFTER_STOP_TIME = 1 #seconds
     DELAY_TIME = 500 # milliseconds
     
