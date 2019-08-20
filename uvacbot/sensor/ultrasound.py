@@ -4,7 +4,7 @@ from pyb import Pin
 
 class Ultrasound(object):
     '''
-    Controls an ultrasound distance sensor
+    Driver for the HC-SR04 ultrasonic distance sensor
     '''
 
     PULSE2CM = 17241.3793 # cm/s
@@ -44,7 +44,7 @@ class Ultrasound(object):
         
             # Send start signal
             self._trigger.on()
-            utime.sleep_ms(1)
+            utime.sleep_us(10)
             self._trigger.off()
             
             # Wait for response
