@@ -8,8 +8,8 @@ from uvacbot.engine.driver import Driver
 import utime
 
 def main():
-    ml = Motor(pyb.Pin.board.D10, 4, 3, pyb.Pin.board.D11)
-    mr = Motor(pyb.Pin.board.D9, 4, 4, pyb.Pin.board.D8)
+    ml = Motor(pyb.Pin.board.D10, 4, 1, pyb.Pin.board.D11)
+    mr = Motor(pyb.Pin.board.D9, 8, 2, pyb.Pin.board.D8)
     d = Driver(ml, mr)
     try:
         d.setMotionVector(80, 0)

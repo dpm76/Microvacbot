@@ -1,3 +1,6 @@
+import sys
+sys.path.append("/flash/userapp")
+
 import utime
 from pyb import Pin
 
@@ -5,12 +8,12 @@ from uvacbot.sensor.ultrasound import Ultrasound
 
 if __name__ == '__main__':
 
-    GPIO_TRIGGER = Pin.board.D0
-    GPIO_ECHO    = Pin.board.D1
+    GPIO_TRIGGER = Pin.board.D14
+    GPIO_ECHO    = Pin.board.D15
 
     try:
         print("Press Ctrl+C to finish")
-        meter = Ultrasound(GPIO_TRIGGER, GPIO_ECHO)
+        meter = Ultrasound(GPIO_TRIGGER, GPIO_ECHO, 1)
 
         while True:
             dist = meter.read()
