@@ -23,11 +23,11 @@ def main():
     
     distanceSensor = Ultrasound(pyb.Pin.board.D14, pyb.Pin.board.D15)
     
-    motorLeft = Motor(pyb.Pin.board.D10, 4, 3, pyb.Pin.board.D11)
-    motorRight = Motor(pyb.Pin.board.D9, 4, 4, pyb.Pin.board.D8)
+    motorLeft = Motor(pyb.Pin.board.D10, 4, 1, pyb.Pin.board.D11)
+    motorRight = Motor(pyb.Pin.board.D9, 8, 2, pyb.Pin.board.D8)
     motorDriver = Driver(motorLeft, motorRight)
     
-    activity = GoAndBackActivity(motorDriver, distanceSensor).setObstacleLed(pyb.LED(3))
+    activity = GoAndBackActivity(motorDriver, distanceSensor) #.setObstacleLed(pyb.LED(3))
     
     robot = Robot().setActivity(activity)
     
