@@ -8,9 +8,9 @@ class Motor(object):
     '''
 
     PWM_FREQ = 50.0
-    MIN_DUTY = 40.0
+    MIN_DUTY = 30.0
     MAX_DUTY = 90.0
-    DIFF_DUTY = MAX_DUTY - MIN_DUTY
+    DIFF_DUTY = (MAX_DUTY - MIN_DUTY) / 100.0
 
     def __init__(self, pwmPin, pwmTimer, pwmChannel, reversePin):
         '''
@@ -35,32 +35,49 @@ class Motor(object):
         self.stop()
         self._pwm.cleanup()
         self._reversePin.off()
-        
-        
+
+
     def setThrottle(self, throttle):
         '''
         Makes the motor spin
         
-        @param throttle: Percentage to spin the motor. This value can be negative, in that case, the motor spins reversed.
+        @param throttle: (-100..100) Percentage to spin the motor. This value can be negative, in that case, the motor spins reversed.        
         '''
     
-        if throttle != 0:
-            if throttle > 0:       
-                self._reversePin.off()
-            else:
-                self._reversePin.on()
-            
-            modThrottle = abs(throttle)
-            if modThrottle > 100.0:
-                modThrottle = 100.0
-            
-            duty = Motor.MIN_DUTY + modThrottle * Motor.DIFF_DUTY / 100.0 
-            
-            self._pwm.setDutyPerc(duty)
-                
+        if throttle < 0:
+            self.setAbsThrottle(-throttle, True)
         else:
+            self.setAbsThrottle(throttle, False)
+            
+            
+    def setAbsThrottle(self, throttle, reverse):
+        '''
+        Sets the motor throttle as absolute value (negative values are considered as 0)
         
+        @param throttle: (0..100) Percentagle to spin the motor.
+        @param reverse: Indicates whether the motor spins forwards or backwards (reversed)
+        '''
+        
+        if throttle < 0.0:
+            throttle = 0.0
+        elif throttle > 100.0:
+            throttle = 100.0
+        
+        if throttle != 0:
+        
+            if reverse:
+                self._reversePin.on()
+            else:
+                self._reversePin.off()
+                
+            duty = Motor.MIN_DUTY + throttle * Motor.DIFF_DUTY
+            self._pwm.setDutyPerc(duty)
+            
+        else:
+            
+            self._reversePin.off()
             self._pwm.setDutyPerc(0)
+            
             
             
     def stop(self):
@@ -68,4 +85,4 @@ class Motor(object):
         Stops the motor
         '''
         
-        self.setThrottle(0)
+        self.setAbsThrottle(0, False)

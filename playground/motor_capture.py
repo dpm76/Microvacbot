@@ -96,7 +96,7 @@ def main():
     # Configure timer for led blinking
     if "led-id" in config:
         timLed = Timer(config["led-timer"], freq=config["led-freq"])
-        timLed.callback(lambda : LED(config["led-id"]).toggle())
+        timLed.callback(lambda t: LED(config["led-id"]).toggle())
 
     # Configure channel for timer IC.
     ch = tim.channel(1, Timer.IC, pin=config["pin-capture"], polarity=Timer.FALLING)
@@ -113,11 +113,11 @@ def main():
 
     motor = Motor(config["motor-pwm-pin"], config["motor-timer"], config["motor-channel"], config["motor-reverse-pin"])
     try:
-        testMotor(ch, motor, 10, 20)
-        testMotor(ch, motor, 20, 20)
-        testMotor(ch, motor, 40, 20)
-        testMotor(ch, motor, 60, 20)
-        testMotor(ch, motor, 80, 20)
+        testMotor(ch, motor, 10, 15)
+        testMotor(ch, motor, 20, 15)
+        testMotor(ch, motor, 40, 15)
+        testMotor(ch, motor, 60, 15)
+        testMotor(ch, motor, 80, 15)
     finally:
         motor.cleanup()
         timLed.deinit()
