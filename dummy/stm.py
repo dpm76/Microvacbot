@@ -1,0 +1,7 @@
+
+mem32 = []
+TIM1 = 1
+TIM2 = 2
+TIM3 = 3
+TIM_SMCR = 0
+TIM_CCER = 0

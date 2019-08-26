@@ -65,3 +65,7 @@ class Switch():
 class Timer():
     
     PWM = 0
+    IC = 1
+    RISING = 0
+    FALLING = 1
+    

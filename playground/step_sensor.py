@@ -1,10 +1,8 @@
 import sys
 sys.path.append("/flash/userapp")
 
-import utime
-
-from uvacbot.engine.motor import Motor
-from pyb import Timer, Pin, LED
+import machine
+from pyb import Timer, Pin
 from stm import mem32, TIM1, TIM2, TIM_SMCR, TIM_CCER
 
 configset = {

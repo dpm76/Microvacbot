@@ -1,6 +1,7 @@
 import sys
 sys.path.append("/flash/userapp")
 
+import machine
 import utime
 
 from uvacbot.engine.motor import Motor
@@ -95,7 +96,7 @@ def main():
     # Configure timer for led blinking
     if "led-id" in config:
         timLed = Timer(config["led-timer"], freq=config["led-freq"])
-        timLed.callback(lambda t: LED(config["led-id"]).toggle())
+        timLed.callback(lambda : LED(config["led-id"]).toggle())
 
     # Configure channel for timer IC.
     ch = tim.channel(1, Timer.IC, pin=config["pin-capture"], polarity=Timer.FALLING)
@@ -107,15 +108,16 @@ def main():
     mem32[config["timer-addr"] + TIM_SMCR] = (mem32[config["timer-addr"] + TIM_SMCR] & 0xfffe0000) | 0x54
 
     # Capture sensitive to rising edge. Ref: 25.4.9 of STM32F76xxx_reference_manual.pdf
+    # The same values are also valid for the MCU STM32L4x6
     mem32[config["timer-addr"] + TIM_CCER] = 0b1001
 
     motor = Motor(config["motor-pwm-pin"], config["motor-timer"], config["motor-channel"], config["motor-reverse-pin"])
     try:
-       testMotor(ch, motor, 10, 20)
-       testMotor(ch, motor, 20, 20)
-       testMotor(ch, motor, 40, 20)
-       testMotor(ch, motor, 60, 20)
-       testMotor(ch, motor, 80, 20)
+        testMotor(ch, motor, 10, 20)
+        testMotor(ch, motor, 20, 20)
+        testMotor(ch, motor, 40, 20)
+        testMotor(ch, motor, 60, 20)
+        testMotor(ch, motor, 80, 20)
     finally:
         motor.cleanup()
         timLed.deinit()
