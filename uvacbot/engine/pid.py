@@ -276,12 +276,13 @@ class PidCoroutine(Pid):
         @param period: Timerate as ms to perform the stabilization
         '''
         
-        self.resetTime()
-        await uasyncio.sleep_ms(period)
-        while self._isRunning:
-        
-            self._calculate()
+        while True:
+            self.resetTime()
             await uasyncio.sleep_ms(period)
+            while self._isRunning:
+            
+                self._calculate()
+                await uasyncio.sleep_ms(period)
         
     
     def init(self, freq):
@@ -292,7 +293,7 @@ class PidCoroutine(Pid):
         @param freq: Frequency of the stabilization. This value is ignored if period is provided        
         '''
         
-        # Period from frequency as µs 
+        # Period from frequency as ms 
         period = int(1e3/freq)
         
         #Reset PID variables
@@ -307,10 +308,18 @@ class PidCoroutine(Pid):
         
     def stop(self):
         '''
-        Stops the coroutine
+        Stops the stabilization
         '''
 
         self._isRunning = False
+        
+        
+    def resume(self):
+        '''
+        Resumes the stabilization
+        '''
+        
+        self._isRunning = True
         
         
     def isRunning(self):

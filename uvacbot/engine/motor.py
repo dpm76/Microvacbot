@@ -86,3 +86,4 @@ class Motor(object):
         '''
         
         self.setAbsThrottle(0, False)
+        

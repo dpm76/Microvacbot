@@ -3,14 +3,16 @@ sys.path.append("/flash/userapp")
 
 import pyb
 from uvacbot.engine.motor import Motor
-from uvacbot.engine.driver import Driver
+from uvacbot.engine.driver import Driver, SmartDriver
+from stm import TIM3, TIM1
 
 import utime
 
 def main():
     ml = Motor(pyb.Pin.board.D10, 4, 1, pyb.Pin.board.D11)
     mr = Motor(pyb.Pin.board.D9, 8, 2, pyb.Pin.board.D8)
-    d = Driver(ml, mr)
+    d = SmartDriver(ml, 3, TIM3, pyb.Pin.board.D5, mr, 1, TIM1, pyb.Pin.board.D7)
+        
     d.setMode(Driver.MODE_DRIVE)
     try:
         d.setMotionVector(80, 0)
