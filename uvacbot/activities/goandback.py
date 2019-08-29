@@ -1,5 +1,6 @@
 import uasyncio
 from uvacbot.engine.driver import Driver
+import random
 
 class GoAndBackActivity(object):
     '''
@@ -7,12 +8,15 @@ class GoAndBackActivity(object):
     then go back a while and try to go forward again
     '''
     
-    DRIVE_THROTTLE = 50.0
-    SLOW_THROTTLE = 25.0
+    DRIVE_THROTTLE = 15.0
+    ROTATION_THROTTLE = 5.0
+    SLOW_THROTTLE = 5.0
     
     DISTANCE_TO_OBSTACLE = 40 # cm
     AFTER_STOP_TIME = 1 #seconds
-    DELAY_TIME = 500 # milliseconds
+    ROTATION_MIN_TIME = 500 #microseconds
+    ROTATION_MAX_TIME = 1000 #microseconds
+    COROUTINE_SLEEP_TIME = 500 # milliseconds
     
     def __init__(self, motorDriver, distanceSensor, backTime=2):
         '''
@@ -116,13 +120,22 @@ class GoAndBackActivity(object):
                     distance = self._distanceSensor.read()
                     if distance < GoAndBackActivity.DISTANCE_TO_OBSTACLE:
                         
+                        self._motorDriver.stop()
                         self._obstacleLedOn()
                             
-                        self._motorDriver.stop()
+                        # Go back
                         await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
                         self._motorDriver.setThrottle(-GoAndBackActivity.SLOW_THROTTLE)
                         await uasyncio.sleep(self._backTime)
                         self._motorDriver.stop()
+                        
+                        # Rotate
+                        self._motorDriver.setMode(Driver.MODE_ROTATE)
+                        self._motorDriver.setDirection(GoAndBackActivity.ROTATION_THROTTLE if random.random() < 0.5 else -GoAndBackActivity.ROTATION_THROTTLE)
+                        rotationTime = random.randrange(GoAndBackActivity.ROTATION_MIN_TIME, GoAndBackActivity.ROTATION_MAX_TIME)
+                        await uasyncio.sleep_ms(rotationTime)
+                        self._motorDriver.stop()
+                        self._motorDriver.setMode(Driver.MODE_DRIVE)
                         
                         self._obstacleLedOff()
                         
@@ -131,7 +144,7 @@ class GoAndBackActivity(object):
                         self._motorDriver.setThrottle(GoAndBackActivity.DRIVE_THROTTLE)
     
                         
-                await uasyncio.sleep_ms(GoAndBackActivity.DELAY_TIME)
+                await uasyncio.sleep_ms(GoAndBackActivity.COROUTINE_SLEEP_TIME)
                 
         finally:
             

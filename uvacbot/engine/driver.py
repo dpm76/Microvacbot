@@ -37,8 +37,6 @@ class Driver(object):
         self._direction = 0.0
         
         self._mode = Driver.MODE_DRIVE
-        
-        self.stop()
 
     
     def stop(self):
@@ -218,15 +216,12 @@ class SmartDriver(Driver):
     '''
     
     PID_FREQ = 50 # Hz
-    PID_KP = 0.7
-    PID_KI = 0.0000001
-    PID_KD = 0.00000012
     
     TARGET_MIN = 20.0
     TARGET_MAX = 50.0
     TARGET_DIFF = (TARGET_MAX - TARGET_MIN) / 100.0
     
-    LPF_ALPHA = 0.3
+    LPF_ALPHA = 0.7
 
     @staticmethod
     def _initIcTimer(timerId, timerAddr, pin):
@@ -241,7 +236,6 @@ class SmartDriver(Driver):
     
         ictimer = pyb.Timer(timerId, prescaler=(machine.freq()[0]//1000000)-1, period=0xffff)
         icchannel = ictimer.channel(1, pyb.Timer.IC, pin=pin, polarity=pyb.Timer.FALLING)
-        icchannel.capture(0)
         
         mem32[timerAddr + TIM_SMCR] = 0
         mem32[timerAddr + TIM_SMCR] = (mem32[timerAddr + TIM_SMCR] & 0xfffe0000) | 0x54
@@ -263,23 +257,32 @@ class SmartDriver(Driver):
         @param rightIcPin: The pin where the capture of pulses on the right motor will be performed
         '''
         
-        super().__init__(leftMotor, rightMotor)
+        Driver.__init__(self, leftMotor, rightMotor)
         
         self._leftThrottle = 0.0
         self._rightThrottle = 0.0
         
+        self._leftTimerAddr = leftIcTimerAddr
         self._leftTimer, self._leftIcChannel = SmartDriver._initIcTimer(leftIcTimerId, leftIcTimerAddr, leftIcPin)
+        self._rightTimerAddr = rightIcTimerAddr
         self._rightTimer, self._rightIcChannel = SmartDriver._initIcTimer(rightIcTimerId, rightIcTimerAddr, rightIcPin)
         
         self._pidInputValues = [0.0]*2 
         
         self._pid = PidCoroutine(2, self._readPidInput, self._setPidOutput, "SmartDriver-PID")
-        self._pid.setProportionalConstants([SmartDriver.PID_KP]*2)
-        self._pid.setIntegralConstants([SmartDriver.PID_KI]*2)
-        self._pid.setDerivativeConstants([SmartDriver.PID_KD]*2)
+        self._pid.setProportionalConstants([0.0]*2)
+        self._pid.setIntegralConstants([0.0]*2)
+        self._pid.setDerivativeConstants([0.0]*2)
         self._pid.init(SmartDriver.PID_FREQ)
         self._pid.setTargets([0.0]*2)
+
+    
+    def setPidConstants(self, kp, ki, kd):
         
+        self._pid.setProportionalConstants(kp).setIntegralConstants(ki).setDerivativeConstants(kd)
+        
+        return self
+
         
     def cleanup(self):
         '''
@@ -289,7 +292,7 @@ class SmartDriver(Driver):
         self._pid.stop()
         self._leftTimer.deinit()
         self._rightTimer.deinit()
-        super().cleanup()
+        Driver.cleanup(self)
         
         
     def _setThrottles(self, leftThrottle, rightThrottle):
@@ -303,8 +306,8 @@ class SmartDriver(Driver):
         self._leftThrottle = leftThrottle
         self._rightThrottle = rightThrottle
         
-        leftTarget = SmartDriver.TARGET_MIN + abs(self._leftThrottle) * SmartDriver.TARGET_DIFF
-        rightTarget = SmartDriver.TARGET_MIN + abs(self._rightThrottle) * SmartDriver.TARGET_DIFF
+        leftTarget = SmartDriver.TARGET_MIN + abs(self._leftThrottle) * SmartDriver.TARGET_DIFF if leftThrottle != 0 else 0
+        rightTarget = SmartDriver.TARGET_MIN + abs(self._rightThrottle) * SmartDriver.TARGET_DIFF if rightThrottle != 0 else 0
         self._pid.setTargets([leftTarget, rightTarget])
         
     
@@ -341,8 +344,10 @@ class SmartDriver(Driver):
         Reads the input values for the PID algorithm
         '''
         
-        self._pidInputValues[0] = SmartDriver._readMotorPidInput(self._leftIcChannel, self._pidInputValues[0], self._leftThrottle)
-        self._pidInputValues[1] = SmartDriver._readMotorPidInput(self._rightIcChannel, self._pidInputValues[1], self._rightThrottle)
+        self._pidInputValues[0] = SmartDriver._readMotorPidInput(self._leftIcChannel, self._pidInputValues[0], self._leftMotor.getThrottle())
+        self._pidInputValues[1] = SmartDriver._readMotorPidInput(self._rightIcChannel, self._pidInputValues[1], self._rightMotor.getThrottle())
+    
+        #print("I: {0}".format(self._pidInputValues))
     
         return self._pidInputValues
 
@@ -369,6 +374,8 @@ class SmartDriver(Driver):
         
         @param output: The ouput of the PID algorithm
         '''
+        
+        #print("O: {0}".format(output))
         
         SmartDriver._setMotorPidOutput(self._leftMotor, self._leftThrottle, output[0])
         SmartDriver._setMotorPidOutput(self._rightMotor, self._rightThrottle, output[1])

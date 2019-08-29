@@ -22,6 +22,8 @@ class Motor(object):
         @param reversePin: Pin which controls the reverse signal
         '''
     
+        self._throttle = 0.0
+    
         self._pwm = Pwm(pwmPin, pwmTimer, pwmChannel, Motor.PWM_FREQ)
         self._reversePin = pyb.Pin(reversePin, pyb.Pin.OUT)
         self._reversePin.off()
@@ -62,15 +64,17 @@ class Motor(object):
             throttle = 0.0
         elif throttle > 100.0:
             throttle = 100.0
+            
+        self._throttle = throttle
         
-        if throttle != 0:
+        if self._throttle != 0:
         
             if reverse:
                 self._reversePin.on()
             else:
                 self._reversePin.off()
                 
-            duty = Motor.MIN_DUTY + throttle * Motor.DIFF_DUTY
+            duty = Motor.MIN_DUTY + self._throttle * Motor.DIFF_DUTY
             self._pwm.setDutyPerc(duty)
             
         else:
@@ -78,7 +82,22 @@ class Motor(object):
             self._reversePin.off()
             self._pwm.setDutyPerc(0)
             
-            
+    
+    def getThrottle(self):
+        '''
+        @return: The current throttle
+        '''
+        
+        return self._throttle
+    
+    
+    def isReversed(self):
+        '''
+        @return: Indicates whether the motor drives forwards or backwards  
+        '''
+        
+        return self._reversePin.value() == 1
+    
             
     def stop(self):
         '''

@@ -123,7 +123,7 @@ class Pid(object):
         
         for i in range(self._length):
             
-            error = self._targets[i] - currentValues[i]            
+            error = self._targets[i] - currentValues[i]
                         
             #Proportional stabilization
             pPart = self._kp[i] * error
