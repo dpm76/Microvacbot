@@ -1,7 +1,5 @@
-import machine
-import pyb
-from stm import mem32, TIM_SMCR, TIM_CCER
 from uvacbot.engine.pid import PidCoroutine
+from uvacbot.signal.input_capture import InputCapture
 
 
 class Driver(object):
@@ -222,38 +220,16 @@ class SmartDriver(Driver):
     TARGET_DIFF = (TARGET_MAX - TARGET_MIN) / 100.0
     
     LPF_ALPHA = 0.7
-
-    @staticmethod
-    def _initIcTimer(timerId, timerAddr, pin):
-        '''
-        Inits a input-capture timer
         
-        @param timerId: Id-number of the timer
-        @param timerAddr: Memory address of the timer
-        @param pin: Pin where the capture will be performed
-        @return: A pair (timer, channel)
-        '''
     
-        ictimer = pyb.Timer(timerId, prescaler=(machine.freq()[0]//1000000)-1, period=0xffff)
-        icchannel = ictimer.channel(1, pyb.Timer.IC, pin=pin, polarity=pyb.Timer.FALLING)
-        
-        mem32[timerAddr + TIM_SMCR] = 0
-        mem32[timerAddr + TIM_SMCR] = (mem32[timerAddr + TIM_SMCR] & 0xfffe0000) | 0x54
-        mem32[timerAddr + TIM_CCER] = 0b1001
-        
-        return (ictimer, icchannel)
-
-    
-    def __init__(self, leftMotor, leftIcTimerId, leftIcTimerAddr, leftIcPin, rightMotor, rightIcTimerId, rightIcTimerAddr, rightIcPin):
+    def __init__(self, leftMotor, leftIcTimerId, leftIcPin, rightMotor, rightIcTimerId, rightIcPin):
         '''
         Constructor
         
         @param leftMotor: The left motor
         @param leftIcTimerId: The id-number of the timer for input-capturing on the left motor
-        @param leftIcTimerAddr: The memory address of the timer for input-capturing on the left motor
         @param leftIcPin: The pin where the capture of pulses on the left motor will be performed
         @param rightIcTimerId: The id-number of the timer for input-capturing on the right motor
-        @param rightIcTimerAddr: The memory address of the timer for input-capturing on the right motor
         @param rightIcPin: The pin where the capture of pulses on the right motor will be performed
         '''
         
@@ -262,10 +238,9 @@ class SmartDriver(Driver):
         self._leftThrottle = 0.0
         self._rightThrottle = 0.0
         
-        self._leftTimerAddr = leftIcTimerAddr
-        self._leftTimer, self._leftIcChannel = SmartDriver._initIcTimer(leftIcTimerId, leftIcTimerAddr, leftIcPin)
-        self._rightTimerAddr = rightIcTimerAddr
-        self._rightTimer, self._rightIcChannel = SmartDriver._initIcTimer(rightIcTimerId, rightIcTimerAddr, rightIcPin)
+        self._leftTimer = InputCapture(leftIcTimerId, leftIcPin)
+        self._rightTimer = InputCapture(rightIcTimerId, rightIcPin)
+        
         
         self._pidInputValues = [0.0]*2 
         
@@ -290,8 +265,8 @@ class SmartDriver(Driver):
         '''
         
         self._pid.stop()
-        self._leftTimer.deinit()
-        self._rightTimer.deinit()
+        self._leftTimer.cleanup()
+        self._rightTimer.cleanup()
         Driver.cleanup(self)
         
         
@@ -312,11 +287,11 @@ class SmartDriver(Driver):
         
     
     @staticmethod
-    def _readMotorPidInput(icChannel, value, throttle):
+    def _readMotorPidInput(timer, value, throttle):
         '''
         Reads the input value of a motor for the PID algorithm
         
-        @param icChannel: Channel to be read
+        @param timer: Input-capture timer
         @param value: Previously read value
         @param throttle: Throttle requested
         @return: Frequency of the motor's step-holes or zero if the throttle is also zero
@@ -324,10 +299,10 @@ class SmartDriver(Driver):
 
         if throttle != 0:
             
-            cap = icChannel.capture()
+            cap = timer.capture()
             numTry = 5
             while cap == 0 and numTry != 0:
-                cap = icChannel.capture()
+                cap = timer.capture()
                 numTry -= 1
         
             currentValue = 1e6/cap if cap != 0 else 0
@@ -344,21 +319,23 @@ class SmartDriver(Driver):
         Reads the input values for the PID algorithm
         '''
         
-        self._pidInputValues[0] = SmartDriver._readMotorPidInput(self._leftIcChannel, self._pidInputValues[0], self._leftMotor.getThrottle())
-        self._pidInputValues[1] = SmartDriver._readMotorPidInput(self._rightIcChannel, self._pidInputValues[1], self._rightMotor.getThrottle())
+        self._pidInputValues[0] = SmartDriver._readMotorPidInput(self._leftTimer, self._pidInputValues[0], self._leftMotor.getThrottle())
+        self._pidInputValues[1] = SmartDriver._readMotorPidInput(self._rightTimer, self._pidInputValues[1], self._rightMotor.getThrottle())
     
+        #print("T: {0}".format(self._pid.getTargets()))
         #print("I: {0}".format(self._pidInputValues))
     
         return self._pidInputValues
 
     
     @staticmethod
-    def _setMotorPidOutput(motor, throttle, output):
+    def _setMotorPidOutput(motor, throttle, timer, output):
         '''
         Sets the output from the PID algorithm on a motor
         
         @param motor: Motor to set
         @param throttle: Requested throttle to determine the direction of the motor
+        @param timer: It will be reset in case of stopping motor
         @param ouput: Output returned by the PID algorithm
         '''
         
@@ -366,18 +343,19 @@ class SmartDriver(Driver):
             motor.setAbsThrottle(output, throttle < 0)
         else:
             motor.stop()
+            timer.reset()
                 
     
     def _setPidOutput(self, output):
         '''
         Sets the PID output
         
-        @param output: The ouput of the PID algorithm
+        @param output: The output of the PID algorithm
         '''
         
         #print("O: {0}".format(output))
         
-        SmartDriver._setMotorPidOutput(self._leftMotor, self._leftThrottle, output[0])
-        SmartDriver._setMotorPidOutput(self._rightMotor, self._rightThrottle, output[1])
+        SmartDriver._setMotorPidOutput(self._leftMotor, self._leftThrottle, self._leftTimer, output[0])
+        SmartDriver._setMotorPidOutput(self._rightMotor, self._rightThrottle, self._rightTimer, output[1])
         
     

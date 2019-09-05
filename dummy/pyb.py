@@ -66,6 +66,7 @@ class Timer():
     
     PWM = 0
     IC = 1
+    OC_TIMING = 2
     RISING = 0
     FALLING = 1
     
