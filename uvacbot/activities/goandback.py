@@ -8,11 +8,11 @@ class GoAndBackActivity(object):
     then go back a while and try to go forward again
     '''
     
-    DRIVE_THROTTLE = 15.0
-    ROTATION_THROTTLE = 5.0
-    SLOW_THROTTLE = 5.0
+    DRIVE_THROTTLE = 10.0
+    ROTATION_THROTTLE = 2.0
+    SLOW_THROTTLE = 2.0
     
-    DISTANCE_TO_OBSTACLE = 40 # cm
+    DISTANCE_TO_OBSTACLE = 30 # cm
     AFTER_STOP_TIME = 1 #seconds
     ROTATION_MIN_TIME = 500 #microseconds
     ROTATION_MAX_TIME = 1000 #microseconds
@@ -100,6 +100,15 @@ class GoAndBackActivity(object):
         self._running = False
         
         
+    async def _rotate(self):
+        
+        self._motorDriver.setMode(Driver.MODE_ROTATE)
+        self._motorDriver.setDirection(GoAndBackActivity.ROTATION_THROTTLE if random.random() < 0.5 else -GoAndBackActivity.ROTATION_THROTTLE)
+        await uasyncio.sleep_ms(random.randrange(GoAndBackActivity.ROTATION_MIN_TIME, GoAndBackActivity.ROTATION_MAX_TIME))
+        self._motorDriver.stop()
+        await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
+
+        
     async def run(self):
         '''
         Executes the activity:
@@ -117,8 +126,7 @@ class GoAndBackActivity(object):
             
                 if self._running:
                 
-                    distance = self._distanceSensor.read()
-                    if distance < GoAndBackActivity.DISTANCE_TO_OBSTACLE:
+                    if self._distanceSensor.read() < GoAndBackActivity.DISTANCE_TO_OBSTACLE:
                         
                         self._motorDriver.stop()
                         self._obstacleLedOn()
@@ -128,15 +136,14 @@ class GoAndBackActivity(object):
                         self._motorDriver.setThrottle(-GoAndBackActivity.SLOW_THROTTLE)
                         await uasyncio.sleep(self._backTime)
                         self._motorDriver.stop()
+                        await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
                         
-                        # Rotate
-                        self._motorDriver.setMode(Driver.MODE_ROTATE)
-                        self._motorDriver.setDirection(GoAndBackActivity.ROTATION_THROTTLE if random.random() < 0.5 else -GoAndBackActivity.ROTATION_THROTTLE)
-                        rotationTime = random.randrange(GoAndBackActivity.ROTATION_MIN_TIME, GoAndBackActivity.ROTATION_MAX_TIME)
-                        await uasyncio.sleep_ms(rotationTime)
-                        self._motorDriver.stop()
+                        # Rotate once at least
+                        await self._rotate()
+                        while self._distanceSensor.read()  < GoAndBackActivity.DISTANCE_TO_OBSTACLE:                        
+                            await self._rotate()
+                            
                         self._motorDriver.setMode(Driver.MODE_DRIVE)
-                        
                         self._obstacleLedOff()
                         
                     elif self._motorDriver.getThrottle() != GoAndBackActivity.DRIVE_THROTTLE:
