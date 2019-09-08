@@ -219,7 +219,7 @@ class SmartDriver(Driver):
     TARGET_MAX = 50.0
     TARGET_DIFF = (TARGET_MAX - TARGET_MIN) / 100.0
     
-    LPF_ALPHA = 0.7
+    DEFAULT_LPF_ALPHA = 0.3
         
     
     def __init__(self, leftMotor, leftIcTimerId, leftIcPin, rightMotor, rightIcTimerId, rightIcPin):
@@ -234,6 +234,8 @@ class SmartDriver(Driver):
         '''
         
         Driver.__init__(self, leftMotor, rightMotor)
+        
+        self._lpfAlpha = SmartDriver.DEFAULT_LPF_ALPHA
         
         self._leftThrottle = 0.0
         self._rightThrottle = 0.0
@@ -253,8 +255,31 @@ class SmartDriver(Driver):
 
     
     def setPidConstants(self, kp, ki, kd):
+        '''
+        Set the constants for the underlying PID-algorithm
+        
+        @param kp: Proportional constant
+        @param ki: Integral constant
+        @param kd: Derivative constant
+        @return The instance of the current object
+        '''
         
         self._pid.setProportionalConstants(kp).setIntegralConstants(ki).setDerivativeConstants(kd)
+        
+        return self
+    
+    
+    def setLpfAlphaConstant(self, lpfAlpha):
+        '''
+        Set the constant for the low pass filter of the wheels motion sensor
+        The filter is implemented as V[n] = V[n-1] + a * (I[n] - V[n-1])
+        Where V is the filtered value and I is the input value from sensor
+        
+        @param lpfAlpha: The low pass filter constant
+        @return The object itself
+        '''
+        
+        self._lpfAlpha = lpfAlpha
         
         return self
 
@@ -285,9 +310,8 @@ class SmartDriver(Driver):
         rightTarget = SmartDriver.TARGET_MIN + abs(self._rightThrottle) * SmartDriver.TARGET_DIFF if rightThrottle != 0 else 0
         self._pid.setTargets([leftTarget, rightTarget])
         
-    
-    @staticmethod
-    def _readMotorPidInput(timer, value, throttle):
+
+    def _readMotorPidInput(self, timer, value, throttle):
         '''
         Reads the input value of a motor for the PID algorithm
         
@@ -306,7 +330,7 @@ class SmartDriver(Driver):
                 numTry -= 1
         
             currentValue = 1e6/cap if cap != 0 else 0
-            value +=  SmartDriver.LPF_ALPHA * (currentValue - value)
+            value +=  self._lpfAlpha * (currentValue - value)
             
         else:
             value = 0
@@ -319,11 +343,11 @@ class SmartDriver(Driver):
         Reads the input values for the PID algorithm
         '''
         
-        self._pidInputValues[0] = SmartDriver._readMotorPidInput(self._leftTimer, self._pidInputValues[0], self._leftMotor.getThrottle())
-        self._pidInputValues[1] = SmartDriver._readMotorPidInput(self._rightTimer, self._pidInputValues[1], self._rightMotor.getThrottle())
+        self._pidInputValues[0] = self._readMotorPidInput(self._leftTimer, self._pidInputValues[0], self._leftMotor.getThrottle())
+        self._pidInputValues[1] = self._readMotorPidInput(self._rightTimer, self._pidInputValues[1], self._rightMotor.getThrottle())
     
-        #print("T: {0}".format(self._pid.getTargets()))
-        #print("I: {0}".format(self._pidInputValues))
+        print("T: {0}".format(self._pid.getTargets()))
+        print("I: {0}".format(self._pidInputValues))
     
         return self._pidInputValues
 
@@ -353,7 +377,7 @@ class SmartDriver(Driver):
         @param output: The output of the PID algorithm
         '''
         
-        #print("O: {0}".format(output))
+        print("O: {0}".format(output))
         
         SmartDriver._setMotorPidOutput(self._leftMotor, self._leftThrottle, self._leftTimer, output[0])
         SmartDriver._setMotorPidOutput(self._rightMotor, self._rightThrottle, self._rightTimer, output[1])

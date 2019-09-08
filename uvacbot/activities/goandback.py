@@ -128,6 +128,7 @@ class GoAndBackActivity(object):
                 
                     if self._distanceSensor.read() < GoAndBackActivity.DISTANCE_TO_OBSTACLE:
                         
+                        # Obstacle detected
                         self._motorDriver.stop()
                         self._obstacleLedOn()
                             
