@@ -8,8 +8,8 @@ from uvacbot.sensor.ultrasound import Ultrasound
 
 if __name__ == '__main__':
 
-    GPIO_TRIGGER = Pin.board.D14
-    GPIO_ECHO    = Pin.board.D15
+    GPIO_TRIGGER = Pin.board.D2
+    GPIO_ECHO    = Pin.board.D4
 
     try:
         print("Press Ctrl+C to finish")

@@ -26,7 +26,7 @@ def main():
     Initializes the resources, launch the activity and performs a heart-beat led running 
     '''
     
-    distanceSensor = Ultrasound(pyb.Pin.board.D14, pyb.Pin.board.D15)
+    distanceSensor = Ultrasound(pyb.Pin.board.D2, pyb.Pin.board.D4)
     
     motorLeft = Motor(pyb.Pin.board.D10, 4, 1, pyb.Pin.board.D11)
     motorRight = Motor(pyb.Pin.board.D9, 8, 2, pyb.Pin.board.D8)
