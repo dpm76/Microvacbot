@@ -76,8 +76,8 @@ class I2CDevice:
         byteH = (word >> 8) & 0xff
         byteL = word & 0xff
     
-        self._bus.write_byte_data(self._address, regH, byteH)
-        self._bus.write_byte_data(self._address, regL, byteL)
+        self._writeByte(regH, byteH)
+        self._writeByte(regL, byteL)
 
 
     def _writeWordHL(self, reg, word):
