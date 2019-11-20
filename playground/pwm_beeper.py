@@ -1,7 +1,7 @@
 import pyb
 import utime
 
-from uvacbot.signal.pwm import Pwm
+from uvacbot.io.pwm import Pwm
 
 alarm1 = {
              'repeat': 10, 

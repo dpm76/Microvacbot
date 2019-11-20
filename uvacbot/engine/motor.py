@@ -1,6 +1,6 @@
 import pyb
 
-from uvacbot.signal.pwm import Pwm
+from uvacbot.io.pwm import Pwm
 
 class Motor(object):
     '''
