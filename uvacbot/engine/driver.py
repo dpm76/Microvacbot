@@ -1,5 +1,5 @@
 from uvacbot.engine.pid import PidCoroutine
-from uvacbot.signal.input_capture import InputCapture
+from uvacbot.io.input_capture import InputCapture
 
 
 class Driver(object):
