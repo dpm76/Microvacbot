@@ -320,11 +320,17 @@ class Mpu6050(I2CDevice):
 
     
     def readTemperature(self):
+        '''
+        @return: Celsius degrees
+        '''
         
         return (self._readSignedWordHL(MPU6050_RA_TEMP_OUT_H)/340.0) + 36.53
 
 
     def readAngles(self):
+        '''
+        @return: Angles as radians
+        '''
         
         packet = self._readDmpPacket()       
         q = dmpGetQuaternion(packet)

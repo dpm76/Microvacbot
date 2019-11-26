@@ -114,7 +114,7 @@ class GoAndBackActivity(object):
         Executes the activity:
             Check for space enough.
             In case there's space, drives forward until any obstacle
-            Otherwise, it drives backwards during a short time
+            Otherwise, it drives backwards during a short time and then rotates
         '''
         
         self._motorDriver.stop()

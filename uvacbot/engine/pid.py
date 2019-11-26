@@ -48,6 +48,8 @@ class Pid(object):
         
         self._integralLocked = [False] * length
         
+        self._modulus = [0.0] * length
+        
     
     def setProportionalConstants(self, kpMatrix):
         '''
@@ -88,6 +90,15 @@ class Pid(object):
         return self
     
     
+    def setModulus(self, modulus):
+        '''
+        Set modulus vector for error calculation.
+        In case the modulus is not required for any dimension, just set as 0 
+        '''
+        
+        self._modulus = modulus
+    
+    
     def getProportionalConstants(self):
         '''
         @return: Proportional constants array
@@ -111,6 +122,25 @@ class Pid(object):
 
         return self._kd
     
+    
+    @staticmethod
+    def _scalarError(target, currentValue):
+        
+        return target - currentValue
+    
+    
+    @staticmethod
+    def _modularError(target, currentValue, modulus):
+        
+        err1 = (target-currentValue)%modulus
+        err2 = (currentValue-target)%modulus
+        if err1 < err2:
+            err = -err1
+        else:
+            err = err2
+            
+        return err
+    
         
     def _calculate(self):
         '''
@@ -123,7 +153,10 @@ class Pid(object):
         
         for i in range(self._length):
             
-            error = self._targets[i] - currentValues[i]
+            if self._modulus[i]:
+                error = Pid._modularError(self._targets[i], currentValues[i], self._modulus[i])
+            else:
+                error = Pid._scalarError(self._targets[i], currentValues[i])
                         
             #Proportional stabilization
             pPart = self._kp[i] * error
