@@ -1,5 +1,6 @@
 from uvacbot.engine.pid import PidCoroutine
 from uvacbot.io.input_capture import InputCapture
+from math import pi
 
 
 class Driver(object):
@@ -35,6 +36,16 @@ class Driver(object):
         self._direction = 0.0
         
         self._mode = Driver.MODE_DRIVE
+        
+        
+    def start(self):
+        '''
+        Starts the driver.
+        The driver starts stopped and in drive mode
+        '''
+        
+        self.stop()
+        self.setMode(Driver.MODE_DRIVE)
 
     
     def stop(self):
@@ -214,6 +225,7 @@ class SmartDriver(Driver):
     '''
     
     PID_FREQ = 50 # Hz
+    PID_RANGE = 3
     
     TARGET_MIN = 20.0
     TARGET_MAX = 50.0
@@ -244,15 +256,27 @@ class SmartDriver(Driver):
         self._rightTimer = InputCapture(rightIcTimerId, rightIcPin)
         
         
-        self._pidInputValues = [0.0]*2 
+        self._pidInputValues = [0.0]*SmartDriver.PID_RANGE
         
-        self._pid = PidCoroutine(2, self._readPidInput, self._setPidOutput, "SmartDriver-PID")
-        self._pid.setProportionalConstants([0.0]*2)
-        self._pid.setIntegralConstants([0.0]*2)
-        self._pid.setDerivativeConstants([0.0]*2)
-        self._pid.init(SmartDriver.PID_FREQ)
-        self._pid.setTargets([0.0]*2)
+        self._pid = PidCoroutine(SmartDriver.PID_RANGE, self._readPidInput, self._setPidOutput, "SmartDriver-PID")
+        self._pid.setProportionalConstants([0.0]*SmartDriver.PID_RANGE)
+        self._pid.setIntegralConstants([0.0]*SmartDriver.PID_RANGE)
+        self._pid.setDerivativeConstants([0.0]*SmartDriver.PID_RANGE)
+        self._pid.setModulus([0.0, 0.0, 2*pi])
+        
+        self._mpu = None
 
+    
+    def start(self):
+        
+        if self._mpu != None:
+            self._mpu.start()
+        
+        Driver.start(self)
+        
+        self._pid.init(SmartDriver.PID_FREQ)
+        self._pid.setTargets([0.0]*SmartDriver.PID_RANGE)
+        
     
     def setPidConstants(self, kp, ki, kd):
         '''
@@ -282,6 +306,17 @@ class SmartDriver(Driver):
         self._lpfAlpha = lpfAlpha
         
         return self
+    
+    
+    def setMotionSensor(self, mpu):
+        '''
+        @param mpu: motion process unit
+        @return The object itself
+        '''
+        
+        self._mpu = mpu
+        
+        return self
 
         
     def cleanup(self):
@@ -292,6 +327,8 @@ class SmartDriver(Driver):
         self._pid.stop()
         self._leftTimer.cleanup()
         self._rightTimer.cleanup()
+        if self._mpu != None:
+            self._mpu.cleanup()
         Driver.cleanup(self)
         
         
@@ -345,6 +382,7 @@ class SmartDriver(Driver):
         
         self._pidInputValues[0] = self._readMotorPidInput(self._leftTimer, self._pidInputValues[0], self._leftMotor.getThrottle())
         self._pidInputValues[1] = self._readMotorPidInput(self._rightTimer, self._pidInputValues[1], self._rightMotor.getThrottle())
+        self._pidInputValues[2] = self._mpu.readAngles()[2] if self._mpu != None else 0.0
     
         print("T: {0}".format(self._pid.getTargets()))
         print("I: {0}".format(self._pidInputValues))
@@ -382,4 +420,19 @@ class SmartDriver(Driver):
         SmartDriver._setMotorPidOutput(self._leftMotor, self._leftThrottle, self._leftTimer, output[0])
         SmartDriver._setMotorPidOutput(self._rightMotor, self._rightThrottle, self._rightTimer, output[1])
         
+        if self.getMode() == Driver.MODE_DRIVE:
+            self.setDirection(output[2])
+        
+    
+    def setMode(self, mode):
+        
+        Driver.setMode(self, mode)
+        
+        if self._mpu != None:
+            if mode == Driver.MODE_DRIVE:
+                self._pid.unlockIntegral(2)
+                self._pid.setTarget(2, self._mpu.readAngles()[2])
+                
+            else:
+                self._pid.lockIntegral(2)
     

@@ -5,10 +5,17 @@ sys.path.append("/flash/userapp")
 import pyb
 from uvacbot.engine.motor import Motor
 from uvacbot.engine.driver import Driver, SmartDriver
+from uvacbot.sensor.mpu6050 import Mpu6050
+
+LPF_ALPHA = 0.3
 
 PID_KP = 0.6
 PID_KI = 0.000005
 PID_KD = 0.000001
+
+PID_DIR_KP = 1.0
+PID_DIR_KI = 0.0
+PID_DIR_KD = 0.0 
 
 
 async def mainLoop(d):
@@ -46,7 +53,9 @@ async def mainLoop(d):
 def main():
     ml = Motor(pyb.Pin.board.D10, 4, 1, pyb.Pin.board.D11)
     mr = Motor(pyb.Pin.board.D9, 8, 2, pyb.Pin.board.D8)
-    d = SmartDriver(ml, 3, pyb.Pin.board.D5, mr, 1, pyb.Pin.board.D7).setPidConstants([PID_KP]*2, [PID_KI]*2, [PID_KD]*2)
+    d = SmartDriver(ml, 3, pyb.Pin.board.D5, mr, 1, pyb.Pin.board.D7).setMotionSensor(Mpu6050(1))
+    d.setPidConstants([PID_KP]*2 + [PID_DIR_KP], [PID_KI]*2 + [PID_DIR_KI], [PID_KD]*2 + [PID_DIR_KD])
+    d.setLpfAlphaConstant(LPF_ALPHA)
     
     loop = uasyncio.get_event_loop()
     loop.run_until_complete(mainLoop(d))

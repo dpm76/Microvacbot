@@ -18,6 +18,10 @@ PID_KP = 1.05
 PID_KI = 0.000001
 PID_KD = 0.012
 
+PID_DIR_KP = 1.0
+PID_DIR_KI = 0.0
+PID_DIR_KD = 0.0
+
 LPF_ALPHA = 0.3
 
 def main():
@@ -30,7 +34,9 @@ def main():
     
     motorLeft = Motor(pyb.Pin.board.D10, 4, 1, pyb.Pin.board.D11)
     motorRight = Motor(pyb.Pin.board.D9, 8, 2, pyb.Pin.board.D8)
-    motorDriver = SmartDriver(motorLeft, 3, pyb.Pin.board.D5, motorRight, 1, pyb.Pin.board.D7).setPidConstants([PID_KP]*2, [PID_KI]*2, [PID_KD]*2).setLpfAlphaConstant(LPF_ALPHA)
+    motorDriver = SmartDriver(motorLeft, 3, pyb.Pin.board.D5, motorRight, 1, pyb.Pin.board.D7)
+    motorDriver.setPidConstants([PID_KP]*2 + [PID_DIR_KP], [PID_KI]*2 + [PID_DIR_KI], [PID_KD]*2 + [PID_DIR_KD])
+    motorDriver.setLpfAlphaConstant(LPF_ALPHA)
     
     activity = GoAndBackActivity(motorDriver, distanceSensor) #.setObstacleLed(pyb.LED(3))
     

@@ -117,8 +117,7 @@ class GoAndBackActivity(object):
             Otherwise, it drives backwards during a short time and then rotates
         '''
         
-        self._motorDriver.stop()
-        self._motorDriver.setMode(Driver.MODE_DRIVE)
+        self._motorDriver.start()
         
         try:
             
