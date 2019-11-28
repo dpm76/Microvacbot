@@ -1,4 +1,4 @@
-import pyb
+from pyb import Timer
 
 class Pwm(object):
     '''
@@ -16,8 +16,8 @@ class Pwm(object):
         '''
     
         self._pin = pin
-        self._timer = pyb.Timer(timer, freq=freq)
-        self._channel = self._timer.channel(channel, pyb.Timer.PWM, pin=self._pin, pulse_width=0)
+        self._timer = Timer(timer, freq=freq)
+        self._channel = self._timer.channel(channel, Timer.PWM, pin=self._pin, pulse_width=0)
         
         
     def setDutyPerc(self, dutyPerc):

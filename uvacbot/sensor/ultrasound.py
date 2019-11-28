@@ -1,5 +1,6 @@
-import utime
+
 from pyb import Pin
+from utime import sleep, sleep_us, ticks_diff, ticks_us
 
 
 class Ultrasound(object):
@@ -27,7 +28,7 @@ class Ultrasound(object):
 
         self._echo = Pin(echoPort, Pin.IN)
 
-        utime.sleep(1)
+        sleep(1)
 
 
     def read(self):
@@ -44,24 +45,24 @@ class Ultrasound(object):
         
             # Send start signal
             self._trigger.on()
-            utime.sleep_us(10)
+            sleep_us(10)
             self._trigger.off()
             
             # Wait for response
-            pollStart = utime.ticks_us()
+            pollStart = ticks_us()
             while self._echo.value() == 0:
-                if utime.ticks_diff(utime.ticks_us(), pollStart) > POLL_TIMEOUT:
+                if ticks_diff(ticks_us(), pollStart) > POLL_TIMEOUT:
                     raise Exception("Timeout waiting for echo HIGH")            
 
             # Measure signal length
-            pulseStart = utime.ticks_us()
+            pulseStart = ticks_us()
             while self._echo.value() == 1:
-                if utime.ticks_diff(utime.ticks_us(), pollStart) > POLL_TIMEOUT:
+                if ticks_diff(ticks_us(), pollStart) > POLL_TIMEOUT:
                     raise Exception("Timeout waiting for echo LOW")
 
-            pulseEnd = utime.ticks_us()
+            pulseEnd = ticks_us()
 
-            pulseDuration = utime.ticks_diff(pulseEnd, pulseStart) # as microseconds
+            pulseDuration = ticks_diff(pulseEnd, pulseStart) # as microseconds
             distSample = pulseDuration * Ultrasound.PULSE2CM / 1e6 # cm
 
             if distSample < Ultrasound.MAX_RANGE:

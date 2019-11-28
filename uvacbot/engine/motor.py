@@ -1,6 +1,7 @@
-import pyb
 
+from pyb import Pin
 from uvacbot.io.pwm import Pwm
+
 
 class Motor(object):
     '''
@@ -25,7 +26,7 @@ class Motor(object):
         self._throttle = 0.0
     
         self._pwm = Pwm(pwmPin, pwmTimer, pwmChannel, Motor.PWM_FREQ)
-        self._reversePin = pyb.Pin(reversePin, pyb.Pin.OUT)
+        self._reversePin = Pin(reversePin, Pin.OUT)
         self._reversePin.off()
         
         

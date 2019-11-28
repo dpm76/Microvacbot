@@ -3,10 +3,10 @@ Created on 17 ago. 2019
 
 @author: david
 '''
-import pyb
-import uasyncio
+from pyb import LED, Switch
+from uasyncio import get_event_loop, sleep_ms as ua_sleep_ms
+from utime import sleep_ms as utime_sleep_ms
 from uvacbot.ui.heartbeat import Heartbeat
-import utime
 
 
 class Robot(object):
@@ -20,7 +20,7 @@ class Robot(object):
         Constructor
         '''
         
-        self._heartbeatLed = pyb.LED(1)
+        self._heartbeatLed = LED(1)
         self._heartbeat = Heartbeat(self._heartbeatLed)
         self._running = False
         self._activity = None
@@ -39,9 +39,9 @@ class Robot(object):
         '''
         
         self._running = True
-        pyb.Switch().callback(self._toggleActivity)
+        Switch().callback(self._toggleActivity)
         
-        loop = uasyncio.get_event_loop()
+        loop = get_event_loop()
         self._heartbeat.setState(Heartbeat.States.Waiting)        
         loop.create_task(self._heartbeat.run())
         loop.run_until_complete(self._keepRunning())
@@ -61,7 +61,7 @@ class Robot(object):
         Finalizes and releases the used resources 
         '''
         
-        pyb.Switch().callback(None)
+        Switch().callback(None)
         self._heartbeatLed.off()
         if self._activity != None:
             
@@ -85,8 +85,8 @@ class Robot(object):
     def _toggleActivity(self):
         
         # First at all try to debounce
-        utime.sleep_ms(100)
-        if pyb.Switch().value():
+        utime_sleep_ms(100)
+        if Switch().value():
             if self._activity == None or self._activity.isRunning():
                 
                 self._stopActivity()
@@ -103,5 +103,5 @@ class Robot(object):
         '''
         
         while self._running:
-            await uasyncio.sleep_ms(500)
+            await ua_sleep_ms(500)
     

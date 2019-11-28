@@ -3,9 +3,10 @@ Created on 21 sept. 2019
 
 @author: David
 '''
-import pyb
-import sys
-sys.path.append("/flash/userapp")
+from sys import path as sys_path
+sys_path.append("/flash/userapp")
+
+from pyb import Switch as pyb_Switch
 
 from uvacbot.sensor.mpu6050 import Mpu6050
 from uasyncio import sleep_ms, get_event_loop
@@ -13,7 +14,7 @@ from math import degrees
 
 async def waitEnd():
     
-    while not pyb.Switch().value():
+    while not pyb_Switch().value():
         await sleep_ms(200)
         
 

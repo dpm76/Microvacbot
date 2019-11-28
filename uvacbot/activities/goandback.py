@@ -1,6 +1,8 @@
-import uasyncio
+from random import random, randrange
+
+from uasyncio import get_event_loop, sleep_ms, sleep
 from uvacbot.engine.driver import Driver
-import random
+
 
 class GoAndBackActivity(object):
     '''
@@ -36,7 +38,7 @@ class GoAndBackActivity(object):
         
         self._obstacleLed = None
         
-        loop = uasyncio.get_event_loop()
+        loop = get_event_loop()
         loop.create_task(self.run())
     
 
@@ -103,10 +105,10 @@ class GoAndBackActivity(object):
     async def _rotate(self):
         
         self._motorDriver.setMode(Driver.MODE_ROTATE)
-        self._motorDriver.setDirection(GoAndBackActivity.ROTATION_THROTTLE if random.random() < 0.5 else -GoAndBackActivity.ROTATION_THROTTLE)
-        await uasyncio.sleep_ms(random.randrange(GoAndBackActivity.ROTATION_MIN_TIME, GoAndBackActivity.ROTATION_MAX_TIME))
+        self._motorDriver.setDirection(GoAndBackActivity.ROTATION_THROTTLE if random() < 0.5 else -GoAndBackActivity.ROTATION_THROTTLE)
+        await sleep_ms(randrange(GoAndBackActivity.ROTATION_MIN_TIME, GoAndBackActivity.ROTATION_MAX_TIME))
         self._motorDriver.stop()
-        await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
+        await sleep(GoAndBackActivity.AFTER_STOP_TIME)
 
         
     async def run(self):
@@ -132,11 +134,11 @@ class GoAndBackActivity(object):
                         self._obstacleLedOn()
                             
                         # Go back
-                        await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
+                        await sleep(GoAndBackActivity.AFTER_STOP_TIME)
                         self._motorDriver.setThrottle(-GoAndBackActivity.SLOW_THROTTLE)
-                        await uasyncio.sleep(self._backTime)
+                        await sleep(self._backTime)
                         self._motorDriver.stop()
-                        await uasyncio.sleep(GoAndBackActivity.AFTER_STOP_TIME)
+                        await sleep(GoAndBackActivity.AFTER_STOP_TIME)
                         
                         # Rotate once at least
                         await self._rotate()
@@ -151,7 +153,7 @@ class GoAndBackActivity(object):
                         self._motorDriver.setThrottle(GoAndBackActivity.DRIVE_THROTTLE)
     
                         
-                await uasyncio.sleep_ms(GoAndBackActivity.COROUTINE_SLEEP_TIME)
+                await sleep_ms(GoAndBackActivity.COROUTINE_SLEEP_TIME)
                 
         finally:
             

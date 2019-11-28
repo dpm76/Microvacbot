@@ -3,7 +3,7 @@ Created on 4 sept. 2019
 
 @author: David
 '''
-import machine
+from machine import freq
 from pyb import Timer
 from stm import mem32, TIM1, TIM2, TIM3, TIM4, TIM5, TIM6, TIM7, TIM8, TIM15, TIM16, TIM17, TIM_SMCR, TIM_CCER, TIM_CCMR1, TIM_CCR1
 
@@ -38,7 +38,7 @@ class InputCapture(object):
         self._timerAddr = InputCapture._addresses[timerId]
         self._pin = pin
         
-        self._timer = Timer(self._timerId, prescaler=(machine.freq()[0]//1000000)-1, period=0xffff)
+        self._timer = Timer(self._timerId, prescaler=(freq()[0]//1000000)-1, period=0xffff)
         
         # Set the timer and channel into input mode
         self._channel = self._timer.channel(1, mode=Timer.IC, pin=self._pin, polarity=Timer.FALLING)

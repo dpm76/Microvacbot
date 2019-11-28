@@ -3,7 +3,8 @@ Created on 26 sept. 2019
 
 @author: David
 '''
-import utime
+
+from utime import sleep_ms
 from uvacbot.io.i2c import I2CDevice
 from uvacbot.sensor.mpu6050_def import MPU6050_DMP_CODE_SIZE, DMP_MEMORY, DMP_CONFIG, MPU6050_DMP_CONFIG_SIZE, MPU6050_CLOCK_PLL_ZGYRO, MPU6050_EXT_SYNC_TEMP_OUT_L, MPU6050_DLPF_BW_42, MPU6050_GYRO_FS_2000, DMP_UPDATES, MPU6050_RA_PWR_MGMT_1, MPU6050_PWR1_SLEEP_BIT, MPU6050_RA_BANK_SEL, MPU6050_RA_MEM_START_ADDR, MPU6050_RA_INT_PIN_CFG, MPU6050_INTCFG_I2C_BYPASS_EN_BIT, MPU6050_RA_MEM_R_W, MPU6050_RA_INT_ENABLE, MPU6050_PWR1_CLKSEL_BIT, MPU6050_PWR1_CLKSEL_LENGTH, MPU6050_RA_SMPLRT_DIV, MPU6050_RA_CONFIG, MPU6050_CFG_EXT_SYNC_SET_BIT, MPU6050_CFG_EXT_SYNC_SET_LENGTH, MPU6050_CFG_DLPF_CFG_BIT, MPU6050_CFG_DLPF_CFG_LENGTH, MPU6050_RA_GYRO_CONFIG, MPU6050_GCONFIG_FS_SEL_BIT, MPU6050_GCONFIG_FS_SEL_LENGTH, MPU6050_RA_DMP_CFG_1, MPU6050_RA_DMP_CFG_2, MPU6050_RA_XG_OFFS_TC, MPU6050_TC_OTP_BNK_VLD_BIT, MPU6050_RA_FIFO_COUNTH, MPU6050_RA_USER_CTRL, MPU6050_USERCTRL_FIFO_RESET_BIT, MPU6050_RA_MOT_THR, MPU6050_RA_ZRMOT_THR, MPU6050_RA_MOT_DUR, MPU6050_RA_ZRMOT_DUR, MPU6050_USERCTRL_FIFO_EN_BIT, MPU6050_USERCTRL_DMP_EN_BIT, MPU6050_USERCTRL_DMP_RESET_BIT, MPU6050_RA_FIFO_R_W, MPU6050_RA_INT_STATUS, DMP_PACKET_SIZE, dmpGetQuaternion, dmpGetGravity, dmpGetYawPitchRoll, MPU6050_RA_TEMP_OUT_H, MPU6050_PWR1_DEVICE_RESET_BIT, MPU6050_RA_XG_OFFS_USRH, MPU6050_RA_YG_OFFS_USRH, MPU6050_RA_ZG_OFFS_USRH
 
@@ -205,7 +206,7 @@ class Mpu6050(I2CDevice):
         
         # Reset MPU6050
         self.reset()
-        utime.sleep_ms(500) # wait after reset
+        sleep_ms(500) # wait after reset
         # Disable sleep mode
         self.setSleepEnabled(False)
         # get MPU hardware revision
@@ -270,7 +271,7 @@ class Mpu6050(I2CDevice):
         # Waiting for FIFO count > 2
         fifoCount = self.getFIFOCount()
         while (fifoCount < 3):
-            utime.sleep_ms(1)
+            sleep_ms(1)
             fifoCount = self.getFIFOCount()
         
         # Reading FIFO data
@@ -293,7 +294,7 @@ class Mpu6050(I2CDevice):
         
         fifoCount = self.getFIFOCount()
         while fifoCount < DMP_PACKET_SIZE:
-            utime.sleep_ms(1)
+            sleep_ms(1)
             fifoCount = self.getFIFOCount()
         
         packet = self.getFIFOBlock()
@@ -305,11 +306,11 @@ class Mpu6050(I2CDevice):
         '''
         Calibrates the sensor
         '''
-        utime.sleep(1)
+        sleep_ms(1000)
         self.resetFIFO()
         
         #Wait for next packet
-        utime.sleep_ms(1)
+        sleep_ms(1)
         packet = self._readDmpPacket()
         
         q = dmpGetQuaternion(packet)

@@ -1,4 +1,5 @@
-import uasyncio
+from uasyncio import sleep_ms
+
 
 class Heartbeat(object):
     '''
@@ -52,17 +53,17 @@ class Heartbeat(object):
 
             if self._state == Heartbeat.States.Active:
                 self._led.on()
-                await uasyncio.sleep_ms(100)
+                await sleep_ms(100)
                 self._led.off()
-                await uasyncio.sleep_ms(100)
+                await sleep_ms(100)
                 self._led.on()
-                await uasyncio.sleep_ms(100)
+                await sleep_ms(100)
                 self._led.off()
-                await uasyncio.sleep_ms(700)
+                await sleep_ms(700)
 
             else:
 
                 self._led.on()
-                await uasyncio.sleep_ms(500)
+                await sleep_ms(500)
                 self._led.off()
-                await uasyncio.sleep_ms(500)
+                await sleep_ms(500)

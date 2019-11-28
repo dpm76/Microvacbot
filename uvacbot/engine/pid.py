@@ -4,8 +4,8 @@ Created on 26 ago. 2019
 @author: david
 '''
 from pyb import Timer
-import uasyncio
-import utime
+from uasyncio import sleep_ms, get_event_loop
+from utime import ticks_us, ticks_diff
 
 
 class Pid(object):
@@ -148,8 +148,8 @@ class Pid(object):
         '''
         
         currentValues = self._readInput()        
-        currentTime = utime.ticks_us()
-        dt = utime.ticks_diff(currentTime, self._previousTime)
+        currentTime = ticks_us()
+        dt = ticks_diff(currentTime, self._previousTime)
         
         for i in range(self._length):
             
@@ -259,7 +259,7 @@ class Pid(object):
         Resets the time
         '''
         
-        self._previousTime = utime.ticks_us()
+        self._previousTime = ticks_us()
         
     
     def init(self, freq):
@@ -311,11 +311,11 @@ class PidCoroutine(Pid):
         
         while True:
             self.resetTime()
-            await uasyncio.sleep_ms(period)
+            await sleep_ms(period)
             while self._isRunning:
             
                 self._calculate()
-                await uasyncio.sleep_ms(period)
+                await sleep_ms(period)
         
     
     def init(self, freq):
@@ -335,7 +335,7 @@ class PidCoroutine(Pid):
         self._lastErrors = [0.0] * length
         
         self._isRunning = True
-        loop = uasyncio.get_event_loop()
+        loop = get_event_loop()
         loop.create_task(self._do(period))
             
         
