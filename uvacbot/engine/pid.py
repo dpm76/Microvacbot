@@ -153,7 +153,7 @@ class Pid(object):
         
         for i in range(self._length):
             
-            if self._modulus[i]:
+            if self._modulus[i] != 0.0:
                 error = Pid._modularError(self._targets[i], currentValues[i], self._modulus[i])
             else:
                 error = Pid._scalarError(self._targets[i], currentValues[i])

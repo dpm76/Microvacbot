@@ -345,7 +345,8 @@ class SmartDriver(Driver):
         
         leftTarget = SmartDriver.TARGET_MIN + abs(self._leftThrottle) * SmartDriver.TARGET_DIFF if leftThrottle != 0 else 0
         rightTarget = SmartDriver.TARGET_MIN + abs(self._rightThrottle) * SmartDriver.TARGET_DIFF if rightThrottle != 0 else 0
-        self._pid.setTargets([leftTarget, rightTarget])
+        self._pid.setTarget(0, leftTarget)
+        self._pid.setTarget(1, rightTarget)
         
 
     def _readMotorPidInput(self, timer, value, throttle):
