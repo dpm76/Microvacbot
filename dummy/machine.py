@@ -3,3 +3,6 @@ def freq():
 
 class I2C:
     pass
+
+class UART:
+    pass
