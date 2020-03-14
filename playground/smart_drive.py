@@ -2,7 +2,8 @@ from sys import path
 path.append("/flash/userapp")
 
 from uvacbot.engine.motor import Motor
-from uvacbot.engine.driver import Driver, SmartDriver
+from uvacbot.engine.driver import Driver
+from uvacbot.engine.smart_driver import SmartDriver
 from uvacbot.sensor.mpu6050 import Mpu6050
 
 from uasyncio import sleep, get_event_loop

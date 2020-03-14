@@ -3,7 +3,7 @@ sys.path.append("/flash/userapp")
 
 import utime
 from pyb import Pin
-
+from pyb import Switch as pyb_Switch
 from uvacbot.sensor.ultrasound import Ultrasound
 
 if __name__ == '__main__':
@@ -12,10 +12,10 @@ if __name__ == '__main__':
     GPIO_ECHO    = Pin.board.D4
 
     try:
-        print("Press Ctrl+C to finish")
+        print("Press user button to finish.")
         meter = Ultrasound(GPIO_TRIGGER, GPIO_ECHO, 1)
 
-        while True:
+        while not pyb_Switch().value():
             dist = meter.read()
             if dist != Ultrasound.OUT_OF_RANGE:
                 print("~ {0:.3f} cm".format(dist))
@@ -24,8 +24,7 @@ if __name__ == '__main__':
 
             utime.sleep_ms(500)
 
-    except KeyboardInterrupt:
-        print("\nCtrl+C pressed.")
+        print("\nUser button pressed.")
 
     finally:
         print("Bye!")

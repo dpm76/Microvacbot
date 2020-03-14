@@ -6,7 +6,7 @@ import pyb
 from stm import mem32, TIM3, TIM_SMCR, TIM_CCER
 import uasyncio
 from uvacbot.engine.motor import Motor
-from uvacbot.engine.pid import PidCoroutine
+from uvacbot.stabilization.pid import PidCoroutine
 
 
 icchannel = None

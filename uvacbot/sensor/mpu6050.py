@@ -421,7 +421,8 @@ class Mpu6050(I2CDevice):
         '''
         Calibrates the sensor
         '''
-        sleep_ms(20000)
+        #Wait for stabilization
+        #sleep_ms(20000)
         self.resetFIFO()
         
         #Wait for next packet
