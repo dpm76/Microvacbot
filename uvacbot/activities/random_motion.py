@@ -3,10 +3,10 @@ from random import random, randrange
 from uasyncio import get_event_loop, sleep_ms, sleep
 
 
-class GoAndBackActivity(object):
+class RandomMotionActivity(object):
     '''
     This activity drives the robot forward until any obstacle,
-    then go back a while and try to go forward again
+    then go back a while, turns, and try to go forward again
     '''
     
     DRIVE_THROTTLE = 80.0
@@ -31,7 +31,7 @@ class GoAndBackActivity(object):
         '''
         
         self._motion = motion
-        self._motion.setRotation(GoAndBackActivity.ROTATION_THROTTLE)
+        self._motion.setRotation(RandomMotionActivity.ROTATION_THROTTLE)
         self._distanceSensor = distanceSensor
         self._backTime = backTime
         self._running = False
@@ -112,9 +112,9 @@ class GoAndBackActivity(object):
             
             self._motion.turnLeft()
         
-        await sleep_ms(randrange(GoAndBackActivity.ROTATION_MIN_TIME, GoAndBackActivity.ROTATION_MAX_TIME))
+        await sleep_ms(randrange(RandomMotionActivity.ROTATION_MIN_TIME, RandomMotionActivity.ROTATION_MAX_TIME))
         self._motion.stop()
-        await sleep(GoAndBackActivity.AFTER_STOP_TIME)
+        await sleep(RandomMotionActivity.AFTER_STOP_TIME)
 
         
     async def run(self):
@@ -133,7 +133,7 @@ class GoAndBackActivity(object):
             
                 if self._running:
                 
-                    if self._distanceSensor.read() < GoAndBackActivity.DISTANCE_TO_OBSTACLE:
+                    if self._distanceSensor.read() < RandomMotionActivity.DISTANCE_TO_OBSTACLE:
                         
                         # Obstacle detected
                         self._motion.stop()
@@ -141,16 +141,16 @@ class GoAndBackActivity(object):
                             
                         # Go back
                         goingForwards = False
-                        await sleep(GoAndBackActivity.AFTER_STOP_TIME)
-                        self._motion.setThrottle(GoAndBackActivity.SLOW_THROTTLE)
+                        await sleep(RandomMotionActivity.AFTER_STOP_TIME)
+                        self._motion.setThrottle(RandomMotionActivity.SLOW_THROTTLE)
                         self._motion.goBackwards()
                         await sleep(self._backTime)
                         self._motion.stop()
-                        await sleep(GoAndBackActivity.AFTER_STOP_TIME)
+                        await sleep(RandomMotionActivity.AFTER_STOP_TIME)
                         
                         # Rotate once at least
                         await self._rotate()
-                        while self._distanceSensor.read()  < GoAndBackActivity.DISTANCE_TO_OBSTACLE:                        
+                        while self._distanceSensor.read()  < RandomMotionActivity.DISTANCE_TO_OBSTACLE:                        
                             await self._rotate()
                             
                         self._obstacleLedOff()
@@ -158,11 +158,11 @@ class GoAndBackActivity(object):
                     elif not goingForwards:
                         
                         goingForwards = True
-                        self._motion.setThrottle(GoAndBackActivity.DRIVE_THROTTLE)
+                        self._motion.setThrottle(RandomMotionActivity.DRIVE_THROTTLE)
                         self._motion.goForwards()
     
                         
-                await sleep_ms(GoAndBackActivity.COROUTINE_SLEEP_TIME)
+                await sleep_ms(RandomMotionActivity.COROUTINE_SLEEP_TIME)
                 
         finally:
             

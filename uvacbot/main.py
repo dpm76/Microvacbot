@@ -7,7 +7,7 @@ from sys import path
 path.append("/flash/userapp")
 
 from pyb import Pin
-from uvacbot.activities.goandback import GoAndBackActivity
+from uvacbot.activities.random_motion import RandomMotionActivity
 from uvacbot.engine.driver import Driver
 from uvacbot.engine.motion import MotionController
 from uvacbot.engine.motor import Motor
@@ -38,7 +38,7 @@ def main():
     
     motion = MotionController(mpu, motorDriver, PID_KP, PID_KI, PID_KD)
     
-    activity = GoAndBackActivity(motion, distanceSensor) #.setObstacleLed(pyb.LED(3))
+    activity = RandomMotionActivity(motion, distanceSensor) #.setObstacleLed(pyb.LED(3))
     robot = Robot().setActivity(activity)
     
     try:
