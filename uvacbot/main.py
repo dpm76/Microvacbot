@@ -7,22 +7,19 @@ from sys import path
 path.append("/flash/userapp")
 
 from pyb import Pin
-from uvacbot.activities.goandback import GoAndBackActivity
-from uvacbot.engine.driver import SmartDriver
+from uvacbot.activities.random_motion import RandomMotionActivity
+from uvacbot.engine.driver import Driver
+from uvacbot.engine.motion import MotionController
 from uvacbot.engine.motor import Motor
 from uvacbot.robot import Robot
+from uvacbot.sensor.mpu6050 import Mpu6050
 from uvacbot.sensor.ultrasound import Ultrasound
 
 
-PID_KP = 1.05
-PID_KI = 0.000001
-PID_KD = 0.012
+PID_KP = 250.0
+PID_KI = 0.0
+PID_KD = 0.0
 
-PID_DIR_KP = 1.0
-PID_DIR_KI = 0.0
-PID_DIR_KD = 0.0
-
-LPF_ALPHA = 0.3
 
 def main():
     '''
@@ -34,12 +31,14 @@ def main():
     
     motorLeft = Motor(Pin.board.D10, 4, 1, Pin.board.D11)
     motorRight = Motor(Pin.board.D9, 8, 2, Pin.board.D8)
-    motorDriver = SmartDriver(motorLeft, 3, Pin.board.D5, motorRight, 1, Pin.board.D7)
-    motorDriver.setPidConstants([PID_KP]*2 + [PID_DIR_KP], [PID_KI]*2 + [PID_DIR_KI], [PID_KD]*2 + [PID_DIR_KD])
-    motorDriver.setLpfAlphaConstant(LPF_ALPHA)
+    motorDriver = Driver(motorLeft, motorRight)
     
-    activity = GoAndBackActivity(motorDriver, distanceSensor) #.setObstacleLed(pyb.LED(3))
+    mpu=Mpu6050(1)
+    mpu.start()
     
+    motion = MotionController(mpu, motorDriver, PID_KP, PID_KI, PID_KD)
+    
+    activity = RandomMotionActivity(motion, distanceSensor) #.setObstacleLed(pyb.LED(3))
     robot = Robot().setActivity(activity)
     
     try:
@@ -48,8 +47,10 @@ def main():
     
     finally:
         
-        robot.cleanup()        
-
+        robot.cleanup()
+        mpu.cleanup()
+        motorDriver.cleanup()
+        
 
 if __name__ == '__main__':
     main()

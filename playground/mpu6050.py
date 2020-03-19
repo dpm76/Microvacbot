@@ -21,10 +21,14 @@ async def waitEnd():
 async def readMpu(mpu):
     
     mpu.start()
+    
     while True:
-        print("temp: {0:.3f}C".format(mpu.readTemperature()))
+        #print("temp: {0:.3f}C".format(mpu.readTemperature()))
         print(["{0:.3f}".format(degrees(a)) for a in mpu.readAngles()])
+        #print()
         await sleep_ms(500)
+        
+    mpu.stop()
             
         
 def main():
