@@ -5,4 +5,5 @@ class I2C:
     pass
 
 class UART:
-    pass
+    
+    IRQ_RXIDLE = 0

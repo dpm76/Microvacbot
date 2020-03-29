@@ -4,25 +4,33 @@ Created on 28 dic. 2019
 @author: david
 '''
 from machine import UART
-from pyb import Pin
+from micropython import const
+from pyb import Pin, Switch, LED
+from uasyncio import get_event_loop, sleep_ms as ua_sleep_ms
 from utime import sleep_ms
 
 
 class Esp8266(object):
     '''
     WiFi module
+    
+    TODO: 20200326 DPM: This class is intended for having a single client. Another limitation is that any request 
+    to the module should not be performed meanwhile it is in server mode. Further improvements must be done
+    to avoid these limitations.
+    A possible solution could be capturing all messages from the module in a IRQ-handler where the contents 
+    could be processed to rise events or send data through queues or even change the status of the object.
     '''
     
     BYTES_ENCODING = "ascii"
     
-    OP_MODE_CLIENT = 1
-    OP_MODE_AP = 2
+    OP_MODE_CLIENT = const(1)
+    OP_MODE_AP = const(2)
     
-    SECURITY_OPEN = 0
-    SECURITY_WEP = 1
-    SECURITY_WPA = 2
-    SECURITY_WPA2 = 3
-    SECURITY_WPA_WPA2 = 4
+    SECURITY_OPEN = const(0)
+    SECURITY_WEP = const(1)
+    SECURITY_WPA = const(2)
+    SECURITY_WPA2 = const(3)
+    SECURITY_WPA_WPA2 = const(4)
 
     def __init__(self, uartId, enablePin=None, baud=115200):
         '''
@@ -43,6 +51,22 @@ class Esp8266(object):
             self._enablePin = None
     
     
+    def start(self, txPower=40):
+        '''
+        Starts the module.
+        Enable the module and set the TX-power.
+        
+        @param txPower: (default=10) the tx-power
+        '''
+        
+        self.enable()
+        self.setTxPower(txPower)
+        
+
+    def cleanup(self):
+        self.disable()
+        
+    
     def enable(self):
         '''
         Enables the module, if enable pin was provided
@@ -61,6 +85,7 @@ class Esp8266(object):
         
         if self._enablePin != None:
             self._enablePin.off()
+            
     
     def isPresent(self):
         '''
@@ -72,14 +97,19 @@ class Esp8266(object):
         self._write("AT")
         return self._isOk()
     
-    def reset(self):
+    
+    def reset(self, txPower=40):
         '''
         Resets the module
+        
+        @param txPower: (default=10) The tx-power
         '''
         
         self._write("AT+RST")
         sleep_ms(300)
         assert self._isOk()
+        self.setTxPower(txPower)
+        
     
     def getVersion(self):
         '''
@@ -98,6 +128,7 @@ class Esp8266(object):
             data = self._readline()
             
         return version
+    
     
     def getOperatingMode(self):
         '''
@@ -118,6 +149,7 @@ class Esp8266(object):
                 
         return mode
     
+    
     def setOperatingMode(self, mode):
         '''
         @param mode: The operating mode. Modes can be added using the or-operator.
@@ -125,6 +157,7 @@ class Esp8266(object):
         
         self._write("AT+CWMODE={0}".format(mode))
         assert self._isOk()
+        
     
     def join(self, ssid, passwd=None):
         '''
@@ -141,19 +174,21 @@ class Esp8266(object):
         '''
         
         if passwd != None and passwd != "":
-            self._write("AT+CWJAP={0},{1}".format(ssid, passwd))
+            self._write("AT+CWJAP_CUR=\"{0}\",\"{1}\"".format(ssid, passwd))
         else:
-            self._write("AT+CWJAP={0}".format(ssid))
+            self._write("AT+CWJAP_CUR=\"{0}\"".format(ssid))
             
         data = self._readline()
-        if not data.startswith(bytes("OK", Esp8266.BYTES_ENCODING)):
-            if data.startswith(bytes("+CWJAP", Esp8266.BYTES_ENCODING)):
-                error = data.split(bytes(":", Esp8266.BYTES_ENCODING))[1].strip()
-                raise Exception("Cannot join to network: ERROR CODE {0}.".format(error))
-            else:
-                raise Exception("Cannot join to network: Undefined reason.")
-            
+        isError = data.startswith(bytes("FAIL", Esp8266.BYTES_ENCODING)) 
+        while not isError and not data.startswith(bytes("OK", Esp8266.BYTES_ENCODING)):
+            sleep_ms(100)
+            data = self._readline()
+            isError = data.startswith(bytes("FAIL", Esp8266.BYTES_ENCODING))
+        
         self._flushRx()
+        if isError:
+            raise Exception("Error: Cannot join to network.")
+        
     
     def joinedNetwork(self):
         '''
@@ -163,6 +198,7 @@ class Esp8266(object):
         @return: Name of the network
         '''
         
+        name = ""
         self._write("AT+CWJAP?")
         data = self._readline()
         self._flushRx()
@@ -171,6 +207,7 @@ class Esp8266(object):
             name = networkData.split(bytes(",", Esp8266.BYTES_ENCODING))[0]
             
         return name
+    
     
     def discover(self):
         '''
@@ -205,6 +242,7 @@ class Esp8266(object):
             self._write("AT+CWSAP=\"{0}\",\"\",{1},{2}".format(ssid, channel, security))
             
         assert self._isOk()
+        
     
     def getAccessPointConfig(self):
         '''
@@ -227,11 +265,13 @@ class Esp8266(object):
         
         self._write("AT+CIFSR")
         data = self._readline()
+        #TODO: Seems not reading the contents
         while data != None and data.startswith(bytes("+CIFSR", Esp8266.BYTES_ENCODING)):
             addressInfo = data.strip().split(bytes(":", Esp8266.BYTES_ENCODING))[1].split(bytes(",", Esp8266.BYTES_ENCODING))
             addresses[addressInfo[0]] = addressInfo[1]
 
         return addresses
+    
     
     def getAddressByType(self, addrType):
         '''
@@ -248,12 +288,27 @@ class Esp8266(object):
             
         return address
     
+    
     def getApIpAddress(self):
         '''
         @return: The IP address of the module's access point or empty if not enabled.
         '''
         
         return self.getAddressByType("APIP")
+    
+    
+    def setApIpAddress(self, ip, gateway, netmask="255.255.255.0"):
+        '''
+        Sets the IP address of the module's access point
+        
+        @param ip: IP address
+        @param gateway: Network's gateway
+        @param netmask: (default="255.255.255.0") Network's mask of the IP addresses 
+        '''
+        
+        self._write("AT+CIPAP_CUR=\"{0}\",\"{1}\",\"{2}\"".format(ip, gateway, netmask))
+        assert self._isOk()
+    
     
     def getStaIpAddress(self):
         '''
@@ -263,10 +318,36 @@ class Esp8266(object):
         
         return self.getAddressByType("STAIP")
     
-    def initServer(self, port=333):
+    
+    def setStaIpAddress(self, ip, gateway, netmask="255.255.255.0"):
+        '''
+        Sets the IP address when it is connected to a station
+        
+        @param ip: IP address
+        @param gateway: Network's gateway
+        @param netmask: (default="255.255.255.0") Network's mask for the IP addresses 
+        '''
+        
+        self._write("AT+CIPSTA_CUR=\"{0}\",\"{1}\",\"{2}\"".format(ip, gateway, netmask))
+        #This command is returning b"O" instead of b"OK\r\n"
+        assert self._startsLineWith("O")
+        
+    
+    def initServer(self, connectionClass, port=333):
         '''
         Initializes the socket server.
+        20200325 DPM:   There is a limitation of the length of the received messages: 
+                        It can receive up to 63 bytes at once and therefore further bytes will be missed.
+                        
+                        In instance, the client could send:
+                            '123456789012345678901234567890123456789012345678901234567890' (70 bytes)
+                        But it receives:
+                            b'+IPD,0,70:12345678901234567890123456789012345678901234567890123'
+                        The strange thing is it knows that it should be 70 bytes, but it misses the
+                        last 7 bytes, which won't came in any further input either.
         
+        @see: Connection class
+        @param connectionClass: (instance of Connection class) Class which implements connection actions
         @param port: Listening port (default 333)
         '''
         
@@ -274,14 +355,43 @@ class Esp8266(object):
         assert self._isOk()
         self._write("AT+CIPSERVER=1,{0}".format(port))
         assert self._isOk()
+        
+        #TODO: 20200326 DPM: Enabling IRQ here makes any request to the module not working properly.
+        self._enableRxIrq()
+        
+        self._connections = {}
+        self._connectionClass = connectionClass
+        
     
     def stopServer(self):
         '''
         Stops the socket server.
         '''
         
+        self._disableRxIrq()
         self._write("AT+CIPSERVER=0")
         assert self._isOk()
+        
+        
+    def _send(self, clientId, data):
+        
+        #TODO: 20200326 DPM: Disabling the IRQ during the send will miss any new client connection. 
+        #        Therefore a single client can be used safely for the moment.
+        
+        #TODO: 20200326 DPM: Implement with a lock to avoid different coroutines sending at the same time. 
+        #         Otherwise the concurrent send requests could be messed.
+        self._disableRxIrq()
+        self._write("AT+CIPSEND={0},{1}".format(clientId, len(data)))
+        self._flushRx()
+        self._write(data)
+        line = self._readline()
+        while line != None and not line.startswith("SEND"):
+            line = self._readline()
+        
+        self._enableRxIrq()
+            
+        assert line != None and "OK" in line
+        
     
     def getTimeout(self):
         '''
@@ -314,15 +424,19 @@ class Esp8266(object):
         
     def _write(self, data):
         
+        #uncomment next line to debug
+        #print("=> '{0}'".format(data))
+        
         self._uart.write("{0}\r\n".format(data))
-        print(data)
         sleep_ms(100)
         
         
     def _readline(self):
         
         data = self._uart.readline()
-        print(data)
+        #uncomment next line to debug
+        #print("<= {0}".format(data))
+            
         return data
         
     
@@ -333,6 +447,28 @@ class Esp8266(object):
         
         while self._readline() != None:
             pass
+        
+    
+    def _startsLineWith(self, text, flush=True):
+        '''
+        Checks whether the next line starts with a text
+        
+        @param text: Text to find
+        @param flush: Flushes the RX-buffer after checking
+        @return: True if the line starts with the text
+        '''
+        
+        data = self._readline()
+        startsWith = data != None and data.startswith(bytes(text, Esp8266.BYTES_ENCODING))
+        while data != None and not startsWith:
+            data = self._readline()
+            startsWith = data != None and data.startswith(bytes(text, Esp8266.BYTES_ENCODING))
+        
+        if flush:
+            self._flushRx()    
+            
+        return startsWith
+    
     
     def _isOk(self, flush=True):
         '''
@@ -340,43 +476,242 @@ class Esp8266(object):
         @return: True if OK return was found
         '''
         
-        data = self._readline()
-        isOk = data != None and data.startswith(bytes("OK", Esp8266.BYTES_ENCODING))
-        while data != None and not isOk:
-            data = self._readline()
-            isOk = data != None and data.startswith(bytes("OK", Esp8266.BYTES_ENCODING))
-        
-        if flush:
-            self._flushRx()    
-            
-        return isOk
+        return self._startsLineWith("OK", flush)
     
-    def listen(self, handler):
+    
+    def _isError(self, flush=True):
         '''
-        TBD
+        @param flush: Flushes the RX-buffer after checking
+        @return: True if Error return was found
         '''
         
+        return self._startsLineWith("ERROR", flush)
+    
+    
+    def _enableRxIrq(self):
+        
+        self._uart.irq(trigger=UART.IRQ_RXIDLE, handler=self._onDataReceived)
+        
+    
+    def _disableRxIrq(self):
+        
+        self._uart.irq(trigger=UART.IRQ_RXIDLE, handler=None)
+    
+    
+    def _onDataReceived(self, _):
+        
+        line = None
+        while self._uart.any():
+            line = self._readline()
+            
+            if line.startswith(b"+IPD"):
+                #Message from client
+                contents = line.split(b":",1)
+                data = contents[0].split(b",")
+                clientId = int(data[1])
+                message = str(contents[1][:int(data[2])], Esp8266.BYTES_ENCODING)
+                get_event_loop().create_task(self._connections[clientId].onReceived(message))
+                
+                
+            else: 
+                line = line.strip()
+                contents = line.split(b",",1)
+                
+                if len(contents) > 1:                    
+                    if contents[1]==b"CONNECT":
+                        #New client
+                        clientId = int(contents[0])
+                        self._connections[clientId] = self._connectionClass(clientId, self)
+                        get_event_loop().create_task(self._connections[clientId].onConnected())
+                        
+                    elif contents[1]==b"CLOSED":
+                        #Client gone
+                        clientId = int(contents[0])
+                        self._connections[clientId].onClose()
+                        del self._connections[clientId]
+                
+
+class Connection(object):
+    '''
+    Handles connections
+    
+    This class must be sub-classed for client dispatching.
+
+    Possible methods to extend are:
+        onConnected
+        onClose
+        onReceived
+    '''
+    
+    def __init__(self, clientId, module):
+        '''
+        Constructor
+        
+        The object will be always instantiated by the module-object, so this method should not be overridden
+        
+        @param clientId: Number of the client (it will be provided by the module-object)
+        @param module: The module-object itself
+        '''
+        
+        self._clientId = clientId
+        self._module = module
+
+        
+    def send(self, message):
+        '''
+        Sends a message to the client.
+        
+        @param message: string sent to the client
+        '''
+        
+        self._module._send(self._clientId, message)
+        
+        
+    def receiveSync(self, timeout=0):
+        '''
+        Waits for data from the client during a time.
+        If no data comes a timeout exception will be risen
+        TODO: Not implemented yet!
+        
+        @param timeout: (default 0) milliseconds after a timeout exception. 
+                        If value <=0 it waits for ever. In this case, handle with care. 
+        '''
+        
+        raise Exception("Not implemented yet!")
+    
+        
+    async def onConnected(self):
+        '''
+        Dispatches the event of a new client is connected
+        It does nothing by default.
+        '''
+        pass
+        
+    
+    def onClose(self):
+        '''
+        Dispatches the event of a client is gone
+        It does nothing by default.
+        '''
         pass
     
     
+    async def onReceived(self, message):
+        '''
+        Dispatches the event of a message form client is received
+        It does nothing by default.
+        '''
+        pass
+    
+
 if __name__ == "__main__":
+    
+    class LedToggleConnection(Connection):
         
-    esp = Esp8266(6, Pin.board.D2, 115200)
-    try:
-        esp.enable()
-        esp.setTxPower(10)
+        async def onConnected(self):
+        
+            print("Connected: {0}".format(self._clientId))
+            
+    
+        def onClose(self):
+            
+            print("Closed: {0}".format(self._clientId))
+            
+        
+        async def onReceived(self, message):
+            
+            if message.startswith("LED"):
+                
+                try:
+                    ledId = int(message.split(":")[1])
+                    #The Nucleo-F767ZI board has 3 on-board user leds
+                    if ledId >= 1 and ledId <= 3:                        
+                        LED(ledId).toggle()
+                        print("Led['{0}'] toggled.".format(ledId))
+                    else:
+                        print("Led not found. Please, try again.")
+                except:
+                    print("I don't understand '{0}'. Please, try again.".format(message))
+                    
+                    
+    class EchoConnection(Connection):
+        
+        async def onConnected(self):
+            
+            print("Connected!")
+            
+            
+        async def onReceived(self, message):
+                       
+            self.send("echo: '{0}'\r\n".format(message))                
+            
+            
+        def onClose(self):
+            
+            print("Closed.")
+            
+            
+            
+    class RemoteExecConnection(Connection):
+        
+        async def onReceived(self, message):
+            
+            code = message.strip()
+            
+            if code != "":
+                try:
+                    exec("{0}\r\n".format(str(code, Esp8266.BYTES_ENCODING)))
+                except Exception as ex:
+                    self.send("Exception: {0}\r\n".format(ex))
+            
+            
+        
+    async def serve(esp):
+        
+        esp.initServer(LedToggleConnection)
+        print("Waiting for connections...")
+        
+        sw = Switch()        
+        while not sw.value():
+            await ua_sleep_ms(200)
+            
+        esp.stopServer()
+        print("Server stopped.")
+                
+    
+    def main():
+    
+        print("*** Esp8266 communication test ***")
+        print("Press switch button to finish.")
+        
+        esp = Esp8266(6, Pin.board.D2, 115200)
+        
+        loop = get_event_loop()
+        
+        esp.start()
         assert esp.isPresent()
-        print(esp.getVersion())
-        esp.reset()
-        esp.setTxPower(10)
-        assert esp.isPresent()
-        print("OP-Mode: {0}".format(esp.getOperatingMode()))
-        esp.setOperatingMode(Esp8266.OP_MODE_AP | Esp8266.OP_MODE_CLIENT)
-        assert esp.getOperatingMode() == (Esp8266.OP_MODE_AP | Esp8266.OP_MODE_CLIENT)
-        esp.setOperatingMode(Esp8266.OP_MODE_AP)
-        assert esp.getOperatingMode() == (Esp8266.OP_MODE_AP)
-        esp.setAccessPointConfig("TestAP", "", 1, Esp8266.SECURITY_OPEN)
-    finally:
-        esp.disable()
+        try:
+            #TODO: Check modules's working mode and set it up if needed (use esp.getOperatingMode())
+            #TODO: Check whether the module is connected to any access-point and join if needed
+            #TODO: Check the IP configuration of the module and set it up if needed
+            
+            #print(esp.getVersion())
+            #esp.reset()
+            #assert esp.isPresent()
+            #print("OP-Mode: {0}".format(esp.getOperatingMode()))
+            #esp.setOperatingMode(Esp8266.OP_MODE_AP | Esp8266.OP_MODE_CLIENT)
+            #assert esp.getOperatingMode() == (Esp8266.OP_MODE_AP | Esp8266.OP_MODE_CLIENT)
+            #esp.setOperatingMode(Esp8266.OP_MODE_AP)
+            #assert esp.getOperatingMode() == (Esp8266.OP_MODE_AP)
+            #esp.setAccessPointConfig("TestAP", "", 1, Esp8266.SECURITY_OPEN)
+            
+            esp.setStaIpAddress("192.168.1.200", "192.168.1.1")
+            loop.run_until_complete(serve(esp))
+            
+        finally:
+            esp._flushRx()
+            esp.cleanup()
+            print("Program finished")
     
     
+    main()

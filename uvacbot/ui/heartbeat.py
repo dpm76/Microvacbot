@@ -1,3 +1,4 @@
+from micropython import const
 from uasyncio import sleep_ms
 
 
@@ -11,8 +12,8 @@ class Heartbeat(object):
         States
         '''
     
-        Waiting = 0
-        Active  = 1
+        Waiting = const(0)
+        Active  = const(1)
         
 
     def __init__(self, led):
