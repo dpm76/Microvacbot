@@ -86,7 +86,7 @@ class RandomMotionActivity(object):
         return self._running
     
     
-    def start(self):
+    async def start(self):
         '''
         Starts the activity
         '''
@@ -94,7 +94,7 @@ class RandomMotionActivity(object):
         self._running = True        
                 
         
-    def stop(self):
+    async def stop(self):
         '''
         Stops the activity
         '''

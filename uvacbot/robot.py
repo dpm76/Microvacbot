@@ -8,6 +8,8 @@ from uasyncio import get_event_loop, sleep_ms as ua_sleep_ms
 from utime import sleep_ms as utime_sleep_ms
 from uvacbot.ui.heartbeat import Heartbeat
 
+from micropython import schedule
+
 
 class Robot(object):
     '''
@@ -25,6 +27,8 @@ class Robot(object):
         self._running = False
         self._activity = None
         
+        self._loop = get_event_loop()
+        
         
     def setActivity(self, activity):
         
@@ -41,19 +45,10 @@ class Robot(object):
         self._running = True
         Switch().callback(self._toggleActivity)
         
-        loop = get_event_loop()
         self._heartbeat.setState(Heartbeat.States.Waiting)        
-        loop.create_task(self._heartbeat.run())
-        loop.run_until_complete(self._keepRunning())
-        loop.close()        
-    
-    
-    def finish(self):
-        '''
-        finalizes the execution 
-        '''
-        
-        self._running = False
+        self._loop.create_task(self._heartbeat.run())
+        self._loop.run_until_complete(self._keepRunning())
+        self._loop.close()
         
     
     def cleanup(self):
@@ -72,16 +67,18 @@ class Robot(object):
         
         self._heartbeat.setState(Heartbeat.States.Active)
         if self._activity != None:
-            self._activity.start()
+            self._loop.create_task(self._activity.start())
 
         
     def _stopActivity(self):
         
         self._heartbeat.setState(Heartbeat.States.Waiting)
         if self._activity != None:
-            self._activity.stop()        
+            self._loop.create_task(self._activity.stop())
+            
+        self._running = False
         
-    
+
     def _toggleActivity(self):
         
         # First at all try to debounce
@@ -89,12 +86,10 @@ class Robot(object):
         if Switch().value():
             if self._activity == None or self._activity.isRunning():
                 
-                self._stopActivity()
-                self.finish()
+                schedule(Robot._stopActivity, self)
             
             else:
-                
-                self._runActivity()
+                schedule(Robot._runActivity, self)
     
     
     async def _keepRunning(self):

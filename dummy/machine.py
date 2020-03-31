@@ -1,9 +1,9 @@
 def freq():
     return (80000000, 80000000, 80000000)
 
-class I2C:
+class I2C(object):
     pass
 
-class UART:
+class UART(object):
     
     IRQ_RXIDLE = 0
