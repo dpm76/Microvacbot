@@ -1,7 +1,7 @@
 '''
 Created on 26 ago. 2019
 
-@author: david
+@author: David
 '''
 from pyb import Timer
 from uasyncio import sleep_ms, get_event_loop
@@ -153,7 +153,7 @@ class Pid(object):
         
         for i in range(self._length):
             
-            if self._modulus[i]:
+            if self._modulus[i] != 0.0:
                 error = Pid._modularError(self._targets[i], currentValues[i], self._modulus[i])
             else:
                 error = Pid._scalarError(self._targets[i], currentValues[i])
@@ -262,12 +262,13 @@ class Pid(object):
         self._previousTime = ticks_us()
         
     
-    def init(self, freq):
+    def init(self, freq, initRunning=True):
         '''
         Initializes stabilization as a coroutine.
-        Inits a thread to perform calculations in background
+        Initializes a thread to perform calculations in background
         
         @param freq: Frequency of the stabilization. This value is ignored if period is provided
+        @param initRunning: Starts stabilization immediately
         '''
         
         raise Exception("Abstract method is not implemented!")
@@ -284,7 +285,7 @@ class Pid(object):
         
 class PidCoroutine(Pid):
     '''
-    Implements the pid stabilization algorithm as a coroutine
+    Implements the PID-stabilization algorithm as a coroutine
     '''    
     
     def __init__(self, length, readInputDelegate, setOutputDelegate, pidName):
@@ -294,7 +295,7 @@ class PidCoroutine(Pid):
         @param length: Number of items to stabilize
         @param readInputDelegate: Method to gather current values.
          Must return an array with the same number of items to stabilize
-        @param setOutputDelegate: Delegate's param is an array with the values to react,
+        @param setOutputDelegate: Delegate's parameter is an array with the values to react,
          one for each item to stabilize. 
         @param pidName: (optional) Name to identify the PID-thread among other ones.
         '''
@@ -306,7 +307,7 @@ class PidCoroutine(Pid):
         '''
         Performs the stabilization as a coroutine
         
-        @param period: Timerate as ms to perform the stabilization
+        @param period: Time rate as milliseconds to perform the stabilization
         '''
         
         while True:
@@ -318,15 +319,16 @@ class PidCoroutine(Pid):
                 await sleep_ms(period)
         
     
-    def init(self, freq):
+    def init(self, freq, initRunning=True):
         '''
         Initializes stabilization as a coroutine.
-        Inits a thread to perform calculations in background
+        Initializes a thread to perform calculations in background
         
-        @param freq: Frequency of the stabilization. This value is ignored if period is provided        
+        @param freq: Frequency of the stabilization. This value is ignored if period is provided
+        @param initRunning: Starts stabilization immediately    
         '''
         
-        # Period from frequency as ms 
+        # Period from frequency as milliseconds 
         period = int(1e3/freq)
         
         #Reset PID variables
@@ -334,7 +336,7 @@ class PidCoroutine(Pid):
         self._integrals = [0.0] * length
         self._lastErrors = [0.0] * length
         
-        self._isRunning = True
+        self._isRunning = initRunning
         loop = get_event_loop()
         loop.create_task(self._do(period))
             
@@ -366,7 +368,7 @@ class PidCoroutine(Pid):
 
 class PidTimer(Pid):
     '''
-    Implements the pid stabilization algorithm as a Timer callback
+    Implements the PID-stabilization algorithm as a Timer callback
     
     IMPORTANT!!! It seems it is not allowed to allocate memory within the timer callback. 
     Therefore, this class won't work.
@@ -380,7 +382,7 @@ class PidTimer(Pid):
         @param length: Number of items to stabilize
         @param readInputDelegate: Method to gather current values.
          Must return an array with the same number of items to stabilize
-        @param setOutputDelegate: Delegate's param is an array with the values to react,
+        @param setOutputDelegate: Delegate's parameter is an array with the values to react,
          one for each item to stabilize. 
         @param pidName: (optional) Name to identify the PID-thread among other ones.
         '''
@@ -396,12 +398,13 @@ class PidTimer(Pid):
         self._calculate()
         
         
-    def init(self, freq):
+    def init(self, freq, initRunning=True):
         '''
         Initializes stabilization as a coroutine.
-        Inits a thread to perform calculations in background
+        Initializes a thread to perform calculations in background
         
         @param freq: Frequency of the stabilization. This value is ignored if period is provided
+        @param initRunning: Starts stabilization immediately
         '''
         
         self._timer.init(freq=freq)
