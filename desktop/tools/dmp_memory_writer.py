@@ -12,7 +12,7 @@ import os
  
 sys.path.append(os.path.dirname(os.path.realpath(__file__))+"/..")
 
-from tools.mpu6050_def import DMP_MEMORY, MPU6050_DMP_CODE_SIZE
+from mpu6050_def import DMP_MEMORY, MPU6050_DMP_CODE_SIZE
 
 CHUNK_SIZE = 16
 
