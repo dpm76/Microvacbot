@@ -1,0 +1,26 @@
+
+NUCLEO-L476RG
+
+CN7.1 (UART3_TX)            ESP8266.RX
+CN7.2 (UART3_RX)            ESP8266.TX
+
+CN6.1 (UART4_TX)            COMM_AUX.RX         Max 9600 baud.
+CN6.2 (UART4_RX)            COMM_AUX.TX         idem
+CN6.4 (3V3)                 3.3V Line
+CN6.5 (5V)                  5V Line
+CN6.6 (GND)                 GND Line
+CN6.7 (GND)                 GND Battery
+CN6.8 (VIN)                 5V-12V Battery
+
+CN5.10(I2C1.SCL)            I2C_line.SCL        MPU6050, BILED-MATRIX
+CN5.9 (I2C1.SDA)            I2C_line.SDA        idem
+CN5.4 (GPIO.D11)            DRV8835.B.PHASE     reverse pin, left motor
+CN5.3 (PWM4/1, GPIO.D10)    DRV8835.B.ENBL      throttle left motor
+CN5.2 (PWM8/2, GPIO.D9)     DRV8835.A.ENBL      throttle right motor
+CN5.1 (GPIO.D8)             DRV8835.A.PHASE     reverse pin, right motor
+
+CN9.8 (GPIO.D7)             LM393.D0            right wheel
+CN9.6 (GPIO.D5)             LM393.D0            left wheel
+CN9.5 (GPIO.D4)             LEVEL_CONVERTER.LV1 HC-SR04.echo
+CN9.4 (GPIO.D3)             ESP8266.CHIP_EN
+CN9.3 (GPIO.D2)             LEVEL_CONVERTER.LV2 HC-SR04.trigger
