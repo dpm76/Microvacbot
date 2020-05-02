@@ -19,13 +19,25 @@ class Board(object):
         self.D13 = Pin()
         self.D14 = Pin()
         self.D15 = Pin()
+        
+        
+class PinCpu(object):
+    
+    def __init__(self):
+        
+        self.C13 = Pin()
+
 
 class Pin(object):
     
     IN = 0
     OUT = 1
     
+    IRQ_FALLING = 2
+    IRQ_RISING = 3
+    
     board = Board()
+    cpu = PinCpu()
     
     def __init__(self, pin, mode=None):
         
