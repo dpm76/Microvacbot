@@ -34,6 +34,7 @@ async def readMpu(mpu):
 def main():
     
     print("MPU6050 test")
+    print("Press switch button to quit.")
     mpu = Mpu6050(1)
         
     loop = get_event_loop()

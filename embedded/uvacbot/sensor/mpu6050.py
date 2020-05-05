@@ -4,9 +4,12 @@ Created on 26 sept. 2019
 @author: David
 '''
 
+from math import atan2, atan, sqrt
+
+from micropython import const
 from utime import sleep_ms
 from uvacbot.io.i2c import I2CDevice
-from math import atan2, atan, sqrt
+
 
 class Mpu6050(I2CDevice):
     
@@ -15,8 +18,10 @@ class Mpu6050(I2CDevice):
     FILE_PATH_DMP_CONFIG = BASE_DIR + "dmp_config.bin"
     FILE_PATH_DMP_UPDATES = BASE_DIR + "dmp_updates.bin"
     
-    MPU6050_RA_PWR_MGMT_1 = 0x6b
-    MPU6050_RA_USER_CTRL = 0x6a
+    MPU6050_RA_PWR_MGMT_1 = const(0x6b)
+    MPU6050_RA_USER_CTRL = const(0x6a)
+    
+    DMP_PACKET_SIZE = const(42)
  
     @staticmethod
     def dmpGetQuaternion(packet):
@@ -71,6 +76,8 @@ class Mpu6050(I2CDevice):
         Constructor
         '''
         super().__init__(i2cId, address)
+        
+        self._packet = [0]*Mpu6050.DMP_PACKET_SIZE
 
 
     def setSleepEnabled(self, status):
@@ -268,7 +275,7 @@ class Mpu6050(I2CDevice):
 
     def getFIFOBlock(self):    
         #MPU6050_RA_FIFO_R_W = 0x74
-        return self._readBlock(0x74, self.getFIFOCount())
+        return self._readBlock(0x74, self._packet, self.getFIFOCount())
 
     
     def getIntStatus(self):
@@ -402,19 +409,21 @@ class Mpu6050(I2CDevice):
         self.getIntStatus()
         
         
-    def _readDmpPacket(self):
+    def _updateDmpPacket(self):
                 
         self.resetFIFO()
         
         fifoCount = self.getFIFOCount()
-        #DMP_PACKET_SIZE = 42
-        while fifoCount < 42:
+
+        while fifoCount < Mpu6050.DMP_PACKET_SIZE:
             sleep_ms(1)
             fifoCount = self.getFIFOCount()
         
-        packet = self.getFIFOBlock()
-                     
-        return packet
+        try:
+            self.getFIFOBlock()
+        except Exception as ex:
+            #TODO: DPM 20200505 Use logger
+            print(ex)
 
     
     def _calibrate(self):
@@ -427,9 +436,9 @@ class Mpu6050(I2CDevice):
         
         #Wait for next packet
         sleep_ms(100)
-        packet = self._readDmpPacket()
+        self._updateDmpPacket()
         
-        q = Mpu6050.dmpGetQuaternion(packet)
+        q = Mpu6050.dmpGetQuaternion(self._packet)
         g = Mpu6050.dmpGetGravity(q)
                          
         ypr = Mpu6050.dmpGetYawPitchRoll(q, g)
@@ -450,13 +459,14 @@ class Mpu6050(I2CDevice):
         @return: Angles as radians
         '''
         
-        packet = self._readDmpPacket()       
-        q = Mpu6050.dmpGetQuaternion(packet)
+        self._updateDmpPacket()
+        
+        q = Mpu6050.dmpGetQuaternion(self._packet)
         g = Mpu6050.dmpGetGravity(q)
         
         ypr = Mpu6050.dmpGetYawPitchRoll(q, g)        
         angles = [ypr["pitch"]-self._angleOffset[0], ypr["roll"]-self._angleOffset[1], ypr["yaw"]-self._angleOffset[2]]
-        
+            
         return angles
 
     
