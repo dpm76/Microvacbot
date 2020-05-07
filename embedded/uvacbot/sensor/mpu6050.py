@@ -316,21 +316,19 @@ class Mpu6050(I2CDevice):
         # Enable pass through mode
         self.setI2CBypassEnabled(True)
         # load DMP code into memory banks
-        dmpMemory = bytes()
         with open(Mpu6050.FILE_PATH_DMP_MEMORY, "rb") as file:
             dmpMemory = bytes(file.read())
             file.close()
-        #MPU6050_DMP_CODE_SIZE = 1929
-        self.writeMemoryBlock(dmpMemory, len(dmpMemory), 0, 0)
-        del dmpMemory
+            #MPU6050_DMP_CODE_SIZE = 1929
+            self.writeMemoryBlock(dmpMemory, len(dmpMemory), 0, 0)
+            del dmpMemory
         # write DMP configuration
-        dmpConfig = bytes()
         with open(Mpu6050.FILE_PATH_DMP_CONFIG, "rb") as file:
             dmpConfig = bytes(file.read())
             file.close()
-        #MPU6050_DMP_CONFIG_SIZE = 192
-        self.writeDMPConfigurationSet(dmpConfig, len(dmpConfig))
-        del dmpConfig
+            #MPU6050_DMP_CONFIG_SIZE = 192
+            self.writeDMPConfigurationSet(dmpConfig, len(dmpConfig))
+            del dmpConfig
         # Setting clock source to Z Gyro
         #MPU6050_CLOCK_PLL_ZGYRO = 0x03
         self.setClockSource(0x03)
@@ -357,51 +355,50 @@ class Mpu6050(I2CDevice):
         self.setYGyroOffsetUser(0)
         self.setZGyroOffsetUser(0)
         # Writing final memory update 1/7 (function unknown)
-        dmpUpdates = bytes()
         with open(Mpu6050.FILE_PATH_DMP_UPDATES, "rb") as file:
             dmpUpdates = bytes(file.read())
             file.close()
-        pos = self._dmpUpdate(0,dmpUpdates)
-        # Writing final memory update 2/7 (function unknown)
-        pos = self._dmpUpdate(pos,dmpUpdates)
-        # Resetting FIFO
-        self.resetFIFO()
-        # Setting motion detection threshold to 2
-        self.setMotionDetectionThreshold(2)
-        # Setting zero-motion detection threshold to 156
-        self.setZeroMotionDetectionThreshold(156)
-        # Setting motion detection duration to 80
-        self.setMotionDetectionDuration(80)
-        # Setting zero-motion detection duration to 0
-        self.setZeroMotionDetectionDuration(0)
-        # Resetting FIFO
-        self.resetFIFO()  
-        # Enabling FIFO
-        self.setFIFOEnabled(True)
-        # Enabling DMP
-        self.setDMPEnabled(True)
-        # Resetting DMP
-        self.resetDMP()
-        # Writing final memory update 3/7 (function unknown)
-        pos = self._dmpUpdate(pos,dmpUpdates)
-        # Writing final memory update 4/7 (function unknown)
-        pos = self._dmpUpdate(pos,dmpUpdates)
-        # Writing final memory update 5/7 (function unknown)
-        pos = self._dmpUpdate(pos,dmpUpdates)
-        # Waiting for FIFO count > 2
-        fifoCount = self.getFIFOCount()
-        while (fifoCount < 3):
-            sleep_ms(1)
+            pos = self._dmpUpdate(0,dmpUpdates)
+            # Writing final memory update 2/7 (function unknown)
+            pos = self._dmpUpdate(pos,dmpUpdates)
+            # Resetting FIFO
+            self.resetFIFO()
+            # Setting motion detection threshold to 2
+            self.setMotionDetectionThreshold(2)
+            # Setting zero-motion detection threshold to 156
+            self.setZeroMotionDetectionThreshold(156)
+            # Setting motion detection duration to 80
+            self.setMotionDetectionDuration(80)
+            # Setting zero-motion detection duration to 0
+            self.setZeroMotionDetectionDuration(0)
+            # Resetting FIFO
+            self.resetFIFO()  
+            # Enabling FIFO
+            self.setFIFOEnabled(True)
+            # Enabling DMP
+            self.setDMPEnabled(True)
+            # Resetting DMP
+            self.resetDMP()
+            # Writing final memory update 3/7 (function unknown)
+            pos = self._dmpUpdate(pos,dmpUpdates)
+            # Writing final memory update 4/7 (function unknown)
+            pos = self._dmpUpdate(pos,dmpUpdates)
+            # Writing final memory update 5/7 (function unknown)
+            pos = self._dmpUpdate(pos,dmpUpdates)
+            # Waiting for FIFO count > 2
             fifoCount = self.getFIFOCount()
-        
-        # Reading FIFO data
-        self.getFIFOBlock()
-        
-        # Writing final memory update 6/7 (function unknown)
-        pos = self._dmpUpdate(pos,dmpUpdates)
-        # Writing final memory update 7/7 (function unknown)
-        pos = self._dmpUpdate(pos,dmpUpdates)
-        del dmpUpdates
+            while (fifoCount < 3):
+                sleep_ms(1)
+                fifoCount = self.getFIFOCount()
+            
+            # Reading FIFO data
+            self.getFIFOBlock()
+            
+            # Writing final memory update 6/7 (function unknown)
+            pos = self._dmpUpdate(pos,dmpUpdates)
+            # Writing final memory update 7/7 (function unknown)
+            pos = self._dmpUpdate(pos,dmpUpdates)
+            del dmpUpdates
         # Disabling DMP (you turn it on later)
         self.setDMPEnabled(False)
         # Resetting FIFO and clearing INT status one last time
@@ -410,16 +407,16 @@ class Mpu6050(I2CDevice):
         
         
     def _updateDmpPacket(self):
-                
-        self.resetFIFO()
-        
-        fifoCount = self.getFIFOCount()
-
-        while fifoCount < Mpu6050.DMP_PACKET_SIZE:
-            sleep_ms(1)
+           
+        try:     
+            self.resetFIFO()
+            
             fifoCount = self.getFIFOCount()
+    
+            while fifoCount < Mpu6050.DMP_PACKET_SIZE:
+                sleep_ms(1)
+                fifoCount = self.getFIFOCount()
         
-        try:
             self.getFIFOBlock()
         except Exception as ex:
             #TODO: DPM 20200505 Use logger
