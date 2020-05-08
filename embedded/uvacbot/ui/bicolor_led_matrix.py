@@ -4,13 +4,14 @@ Created on 18/02/2019
 @author: david
 '''
 
+from micropython import const
 from uvacbot.io.i2c import I2CDevice
 
 
-K = BLACK = 0
-G = GREEN = 1
-R = RED = 2
-Y = YELLOW = 3
+K = BLACK = const(0)
+G = GREEN = const(1)
+R = RED = const(2)
+Y = YELLOW = const(3)
 
 
 class BiColorLedMatrix(I2CDevice):
@@ -19,12 +20,12 @@ class BiColorLedMatrix(I2CDevice):
     Ref. https://www.adafruit.com/product/902
     '''
 
-    DEFAULT_ADDRESS = 0x70
+    DEFAULT_ADDRESS = const(0x70)
     
-    BLINK_OFF = 0
-    BLINK_2HZ = 1
-    BLINK_1HZ = 2
-    BLINK_HALF_HZ = 3
+    BLINK_OFF = const(0)
+    BLINK_2HZ = const(1)
+    BLINK_1HZ = const(2)
+    BLINK_HALF_HZ = const(3)
     
     
     def __init__(self, channel=1, address=DEFAULT_ADDRESS):
