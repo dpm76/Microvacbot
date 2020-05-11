@@ -48,6 +48,7 @@ class Robot(object):
     def setActivity(self, activity):
         
         self._activity = activity
+        self._activity.setDeviceProvider(self)
         
         return self
     

@@ -102,6 +102,17 @@ class RandomMotionActivity(object):
         self._running = False
         
         
+    def setDeviceProvider(self, deviceProvider):
+        '''
+        Sets the object which provides the devices
+        
+        @param deviceProvider: The device provider
+        '''
+        
+        #TODO: 20200511 DPM Get from the device provider all needed devices
+        pass
+    
+        
     async def _rotate(self):
         
         if random() < 0.5:
