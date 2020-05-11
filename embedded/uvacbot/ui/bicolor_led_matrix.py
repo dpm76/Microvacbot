@@ -7,7 +7,6 @@ Created on 18/02/2019
 from micropython import const
 from uvacbot.io.i2c import I2CDevice
 
-
 K = BLACK = const(0)
 G = GREEN = const(1)
 R = RED = const(2)
@@ -77,7 +76,7 @@ class BiColorLedMatrix(I2CDevice):
 
         self._displaySetup = (self._displaySetup & 0x6) | (mode << 1)
         self._writeByte(0x80 | self._displaySetup, 0)
-    
+   
     
     def setDisplayState(self, on):
         '''
@@ -108,18 +107,23 @@ class BiColorLedMatrix(I2CDevice):
         '''
         Set the dim level
 
-        @param dim: value between 0 and 15
+        @param dim: value range between 0 and 15 or [0..0xF]
         '''
 
         self._writeByte(0xe0 | (dim & 0x0f), 0)
 
         
-    def dump(self, matrix):
+    def dumpMatrix(self, matrix):
         '''
-        Dump the matrix into the device's memory.
+        Dumps the matrix into the device's memory.
         It doesn't care about the size of the matrix, because it uses the first 8 rows and first 8
         columns. Whenever smaller the size, it fills in with zeros.
+        
+        @param matrix: 8x8-Matrix with the display's elements
         '''
+        
+        greenBytes = bytearray([0]*8)
+        redBytes = bytearray([0]*8)
         
         for row in range(0, 8):
         
@@ -131,5 +135,50 @@ class BiColorLedMatrix(I2CDevice):
                 memGreen |= (matrix[row][col] & GREEN) << col
                 memRed |= ((matrix[row][col] & RED)>>1) << col
                 
-            self._writeByte(row * 2, memGreen)
-            self._writeByte((row * 2) + 1, memRed)
+            greenBytes[row] = memGreen
+            redBytes[row] = memRed
+                
+        self.dumpRows(greenBytes, redBytes)
+            
+            
+    def dumpRows(self, greenRows=None, redRows=None):
+        '''
+        Dumps the color rows into device's memory, each for one color component: green and red.
+        
+        @param greenRows: (default=None) Array of bytes where each bit selects whether the green component is on 
+        @param redRows: (default=None) Array of bytes where each bit selects whether the red component is on
+        '''
+        
+        for row in range(0, 8):
+            
+            self._writeByte(row * 2, greenRows[row] if greenRows != None and len(greenRows) > row else 0)
+            self._writeByte((row * 2) + 1, redRows[row] if redRows != None and len(redRows) > row else 0)
+    
+    
+    def updateDisplayFromRows(self, greenRows=None, redRows=None, blinkMode=BLINK_OFF):
+        '''
+        Updates the display from color component (green and red) rows. Additionally it sets the blinking mode.
+        
+        @param greenRows: (default=None) Array of bytes where each bit selects whether the green component is on
+        @param redRows: (default=None) Array of bytes where each bit selects whether the red component is on
+        @param blinkMode: (default=BLINK_OFF) Blinking mode
+        '''
+        
+        self.displayOff()
+        self.setBlink(blinkMode)
+        self.dumpRows(greenRows, redRows)
+        self.displayOn()
+        
+        
+    def updateDisplayFromMatrix(self, matrix, blinkMode=BLINK_OFF):
+        '''
+        Updates the display from a matrix. Additionally it sets the blinking mode.
+        
+        @param matrix: 8x8-Matrix with the display's elements
+        @param blinkMode: (default=BLINK_OFF) Blinking mode
+        '''
+        
+        self.displayOff()
+        self.setBlink(blinkMode)
+        self.dumpMatrix(matrix)
+        self.displayOn()
