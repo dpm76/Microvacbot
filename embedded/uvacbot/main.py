@@ -24,7 +24,7 @@ PID_KD = 0.0
 def main():
     '''
     Main application function
-    Initializes the resources, launch the activity and performs a heart-beat led running 
+    Initializes the resources, launches the activity and performs a heart-beat led running 
     '''
     
     #distanceSensor = Ultrasound(Pin.board.D2, Pin.board.D4)

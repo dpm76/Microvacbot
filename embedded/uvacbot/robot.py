@@ -9,6 +9,7 @@ from utime import sleep_ms as utime_sleep_ms
 from uvacbot.ui.heartbeat import Heartbeat
 
 from micropython import schedule
+from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix
 
 
 class Robot(object):
@@ -16,6 +17,8 @@ class Robot(object):
     Handles the common objects, launches activities and keeps them running
     '''
 
+    _ledMatrix=None
+    
 
     def __init__(self):
         '''
@@ -30,6 +33,18 @@ class Robot(object):
         self._loop = get_event_loop()
         
         
+    def getLedMatrix(self):
+        
+        if self._ledMatrix == None:
+            #TODO: 20200511 DPM Get I2C channel from settings
+            self._ledMatrix = BiColorLedMatrix(1)
+            self._ledMatrix.start()
+            #TODO: 20200511 DPM Get default dim from settings
+            self._ledMatrix.setDim(0x8)
+        
+        return self._ledMatrix
+
+        
     def setActivity(self, activity):
         
         self._activity = activity
@@ -41,6 +56,16 @@ class Robot(object):
         '''
         Runs the execution of the activity 
         '''
+        
+        ledMatrix = self.getLedMatrix()
+        ledMatrix.updateDisplayFromRows(greenRows=bytes([0xff]*8))
+        utime_sleep_ms(500)
+        ledMatrix.updateDisplayFromRows(redRows=bytes([0xff]*8))
+        utime_sleep_ms(500)
+        ledMatrix.updateDisplayFromRows(bytes([0xff]*8), bytes([0xff]*8))
+        utime_sleep_ms(500)
+        ledMatrix.displayOff()
+        ledMatrix.clear()
         
         self._running = True
         Switch().callback(self._toggleActivity)
@@ -61,6 +86,10 @@ class Robot(object):
         if self._activity != None:
             
             self._activity.cleanup()
+            
+        if self._ledMatrix != None:
+            
+            self._ledMatrix.cleanup()
         
     
     def _runActivity(self):
