@@ -1,6 +1,7 @@
 
 from random import random, randrange
 from uasyncio import get_event_loop, sleep_ms, sleep
+from uvacbot.ui.bicolor_led_matrix import R, G, Y, K, BiColorLedMatrix
 
 
 class RandomMotionActivity(object):
@@ -18,6 +19,39 @@ class RandomMotionActivity(object):
     ROTATION_MIN_TIME = 500 #microseconds
     ROTATION_MAX_TIME = 1000 #microseconds
     COROUTINE_SLEEP_TIME = 500 # milliseconds
+    
+    STATE_ICONS = {
+        "forwards": [
+            [K,K,K,K,K,K,K,K],
+            [K,G,G,K,K,G,G,K],
+            [K,G,G,K,K,G,G,K],
+            [K,K,K,K,K,K,K,K],
+            [K,K,K,K,K,K,K,K],
+            [K,G,K,K,K,K,G,K],
+            [K,K,G,G,G,G,K,K],
+            [K,K,K,K,K,K,K,K]
+        ],
+        "stopped": [
+            [K,K,K,K,K,K,K,K],
+            [K,R,R,K,K,R,R,K],
+            [K,R,R,K,K,R,R,K],
+            [K,K,K,K,K,K,K,K],
+            [K,K,K,R,R,K,K,K],
+            [K,K,R,K,K,R,K,K],
+            [K,K,K,R,R,K,K,K],
+            [K,K,K,K,K,K,K,K]
+        ],
+        "dodge": [
+            [K,K,K,K,K,K,K,K],
+            [K,Y,Y,K,K,Y,Y,K],
+            [K,Y,Y,K,K,Y,Y,K],
+            [K,K,K,K,K,K,K,K],
+            [K,K,K,K,K,K,K,K],
+            [K,Y,K,K,Y,Y,K,K],
+            [K,K,Y,Y,K,K,Y,K],
+            [K,K,K,K,K,K,K,K]
+        ]
+    }
     
     def __init__(self, motion, distanceSensor, backTime=2):
         '''
@@ -37,6 +71,7 @@ class RandomMotionActivity(object):
         self._running = False
         
         self._obstacleLed = None
+        self._ledMatrix = None
         
         loop = get_event_loop()
         loop.create_task(self.run())
@@ -109,8 +144,7 @@ class RandomMotionActivity(object):
         @param deviceProvider: The device provider
         '''
         
-        #TODO: 20200511 DPM Get from the device provider all needed devices
-        pass
+        self._ledMatrix = deviceProvider.getLedMatrix()
     
         
     async def _rotate(self):
@@ -149,10 +183,13 @@ class RandomMotionActivity(object):
                         # Obstacle detected
                         self._motion.stop()
                         self._obstacleLedOn()
-                            
-                        # Go back
+                        self._ledMatrix.updateDisplayFromMatrix(RandomMotionActivity.STATE_ICONS["stopped"])
+                        
                         goingForwards = False
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
+                        
+                        # Go back
+                        self._ledMatrix.setBlink(BiColorLedMatrix.BLINK_2HZ)
                         self._motion.setThrottle(RandomMotionActivity.SLOW_THROTTLE)
                         self._motion.goBackwards()
                         await sleep(self._backTime)
@@ -160,6 +197,7 @@ class RandomMotionActivity(object):
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
                         
                         # Rotate once at least
+                        self._ledMatrix.updateDisplayFromMatrix(RandomMotionActivity.STATE_ICONS["dodge"], BiColorLedMatrix.BLINK_2HZ)
                         await self._rotate()
                         while self._distanceSensor.read()  < RandomMotionActivity.DISTANCE_TO_OBSTACLE:                        
                             await self._rotate()
@@ -168,10 +206,10 @@ class RandomMotionActivity(object):
                         
                     elif not goingForwards:
                         
+                        self._ledMatrix.updateDisplayFromMatrix(RandomMotionActivity.STATE_ICONS["forwards"])
                         goingForwards = True
                         self._motion.setThrottle(RandomMotionActivity.DRIVE_THROTTLE)
                         self._motion.goForwards()
-    
                         
                 await sleep_ms(RandomMotionActivity.COROUTINE_SLEEP_TIME)
                 

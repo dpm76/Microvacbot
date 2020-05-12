@@ -74,7 +74,7 @@ class BiColorLedMatrix(I2CDevice):
         @param mode: Blink mode. See constants BLINK_*
         '''
 
-        self._displaySetup = (self._displaySetup & 0x6) | (mode << 1)
+        self._displaySetup = (self._displaySetup & 0x9) | (mode << 1)
         self._writeByte(0x80 | self._displaySetup, 0)
    
     
@@ -164,9 +164,9 @@ class BiColorLedMatrix(I2CDevice):
         @param blinkMode: (default=BLINK_OFF) Blinking mode
         '''
         
-        self.displayOff()
-        self.setBlink(blinkMode)
+        self.displayOff()        
         self.dumpRows(greenRows, redRows)
+        self.setBlink(blinkMode)
         self.displayOn()
         
         
@@ -179,6 +179,6 @@ class BiColorLedMatrix(I2CDevice):
         '''
         
         self.displayOff()
-        self.setBlink(blinkMode)
         self.dumpMatrix(matrix)
+        self.setBlink(blinkMode)
         self.displayOn()
