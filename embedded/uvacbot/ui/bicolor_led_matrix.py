@@ -138,10 +138,21 @@ class BiColorLedMatrix(I2CDevice):
             greenBytes[row] = memGreen
             redBytes[row] = memRed
                 
-        self.dumpRows(greenBytes, redBytes)
+        self.dumpRows(redBytes, greenBytes)
+    
+    @staticmethod
+    def _reverseByte(inputByte):
+        
+        outputByte = 0
+        for _ in range(8):
+            outputByte <<= 1
+            outputByte |= inputByte & 1            
+            inputByte >>= 1
+        
+        return outputByte
+                
             
-            
-    def dumpRows(self, greenRows=None, redRows=None):
+    def dumpRows(self, redRows=None, greenRows=None):
         '''
         Dumps the color rows into device's memory, each for one color component: green and red.
         
@@ -151,11 +162,11 @@ class BiColorLedMatrix(I2CDevice):
         
         for row in range(0, 8):
             
-            self._writeByte(row * 2, greenRows[row] if greenRows != None and len(greenRows) > row else 0)
-            self._writeByte((row * 2) + 1, redRows[row] if redRows != None and len(redRows) > row else 0)
+            self._writeByte(row * 2, BiColorLedMatrix._reverseByte(greenRows[row]) if greenRows != None and len(greenRows) > row else 0)
+            self._writeByte((row * 2) + 1, BiColorLedMatrix._reverseByte(redRows[row]) if redRows != None and len(redRows) > row else 0)
     
     
-    def updateDisplayFromRows(self, greenRows=None, redRows=None, blinkMode=BLINK_OFF):
+    def updateDisplayFromRows(self, redRows=None, greenRows=None, blinkMode=BLINK_OFF):
         '''
         Updates the display from color component (green and red) rows. Additionally it sets the blinking mode.
         
@@ -165,7 +176,7 @@ class BiColorLedMatrix(I2CDevice):
         '''
         
         self.displayOff()        
-        self.dumpRows(greenRows, redRows)
+        self.dumpRows(redRows, greenRows)
         self.setBlink(blinkMode)
         self.displayOn()
         

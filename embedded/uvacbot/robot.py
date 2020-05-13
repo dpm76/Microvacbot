@@ -27,6 +27,7 @@ class Robot(object):
         
         self._heartbeatLed = LED(1)
         self._heartbeat = Heartbeat(self._heartbeatLed)
+        self._testLedMatrix()
         self._running = False
         self._activity = None
         
@@ -50,6 +51,9 @@ class Robot(object):
         self._activity = activity
         self._activity.setDeviceProvider(self)
         
+        iconRows = self._activity.getIconRows()
+        self.getLedMatrix().updateDisplayFromRows(iconRows[0], iconRows[1])
+        
         return self
     
     
@@ -57,17 +61,7 @@ class Robot(object):
         '''
         Runs the execution of the activity 
         '''
-        
-        ledMatrix = self.getLedMatrix()
-        ledMatrix.updateDisplayFromRows(greenRows=bytes([0xff]*8))
-        utime_sleep_ms(500)
-        ledMatrix.updateDisplayFromRows(redRows=bytes([0xff]*8))
-        utime_sleep_ms(500)
-        ledMatrix.updateDisplayFromRows(bytes([0xff]*8), bytes([0xff]*8))
-        utime_sleep_ms(500)
-        ledMatrix.displayOff()
-        ledMatrix.clear()
-        
+
         self._running = True
         Switch().callback(self._toggleActivity)
         
@@ -93,9 +87,24 @@ class Robot(object):
             self._ledMatrix.cleanup()
         
     
+    def _testLedMatrix(self):
+        
+        ledMatrix = self.getLedMatrix()
+        ledMatrix.updateDisplayFromRows(greenRows=bytes([0xff]*8))
+        utime_sleep_ms(500)
+        ledMatrix.updateDisplayFromRows(redRows=bytes([0xff]*8))
+        utime_sleep_ms(500)
+        ledMatrix.updateDisplayFromRows(bytes([0xff]*8), bytes([0xff]*8))
+        utime_sleep_ms(500)
+        ledMatrix.displayOff()
+        ledMatrix.clear()
+        
+    
     def _runActivity(self):
         
         self._heartbeat.setState(Heartbeat.States.Active)
+        self.getLedMatrix().displayOff()
+        self.getLedMatrix().clear()
         if self._activity != None:
             self._loop.create_task(self._activity.start())
 
@@ -118,7 +127,8 @@ class Robot(object):
                 
                 schedule(Robot._stopActivity, self)
             
-            else:
+            else:                
+                
                 schedule(Robot._runActivity, self)
     
     

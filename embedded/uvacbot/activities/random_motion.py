@@ -146,7 +146,34 @@ class RandomMotionActivity(object):
         
         self._ledMatrix = deviceProvider.getLedMatrix()
     
+    
+    def getIconRows(self):
+        '''
+        @return: The icon of this activity
+        '''
         
+        return ([
+            0b00000000,
+            0b00000000,
+            0b11000000,
+            0b00100000,
+            0b00010010,
+            0b00001111,
+            0b00000010,
+            0b00000000
+            ], 
+            [
+            0b00000000,
+            0b00000010,
+            0b00001111,
+            0b00010010,
+            0b00100000,
+            0b11000000,
+            0b00000000,
+            0b00000000
+        ])
+        
+    
     async def _rotate(self):
         
         if random() < 0.5:

@@ -48,21 +48,21 @@ class RemoteControlledActivity(object):
         ],
         [
             [K,K,K,K,K,K,K,K],
-            [K,K,K,K,Y,K,K,K],
-            [K,K,K,K,Y,Y,K,K],
-            [K,K,K,K,Y,Y,Y,K],
-            [K,K,K,K,Y,Y,K,K],
-            [K,K,K,K,Y,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K]            
-        ],
-        [
-            [K,K,K,K,K,K,K,K],
             [K,K,K,Y,K,K,K,K],
             [K,K,Y,Y,K,K,K,K],
             [K,Y,Y,Y,K,K,K,K],
             [K,K,Y,Y,K,K,K,K],
             [K,K,K,Y,K,K,K,K],
+            [K,K,K,K,K,K,K,K],
+            [K,K,K,K,K,K,K,K]
+        ],
+        [
+            [K,K,K,K,K,K,K,K],
+            [K,K,K,K,Y,K,K,K],
+            [K,K,K,K,Y,Y,K,K],
+            [K,K,K,K,Y,Y,Y,K],
+            [K,K,K,K,Y,Y,K,K],
+            [K,K,K,K,Y,K,K,K],
             [K,K,K,K,K,K,K,K],
             [K,K,K,K,K,K,K,K]            
         ]
@@ -106,6 +106,23 @@ class RemoteControlledActivity(object):
         
         self._ledMatrix = deviceProvider.getLedMatrix()
         
+        
+    def getIconRows(self):
+        '''
+        @return: The icon of this activity
+        '''
+        
+        return ([            
+            0b00000000,
+            0b00111100,
+            0b01000010,
+            0b00011000,
+            0b00100100,
+            0b00000000,
+            0b00011000,
+            0b00000000
+            ], None)
+    
     
     def cleanup(self):
         
