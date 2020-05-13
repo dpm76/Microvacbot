@@ -17,10 +17,6 @@ from uvacbot.robot import Robot
 from uvacbot.sensor.mpu6050 import Mpu6050
 #from uvacbot.sensor.ultrasound import Ultrasound
 
-
-from micropython import alloc_emergency_exception_buf
-alloc_emergency_exception_buf(100)
-
 PID_KP = 250.0
 PID_KI = 0.0
 PID_KD = 0.0

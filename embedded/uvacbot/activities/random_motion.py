@@ -1,7 +1,7 @@
 
 from random import random, randrange
 from uasyncio import get_event_loop, sleep_ms, sleep
-from uvacbot.ui.bicolor_led_matrix import R, G, Y, K, BiColorLedMatrix
+from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix
 
 
 class RandomMotionActivity(object):
@@ -22,34 +22,34 @@ class RandomMotionActivity(object):
     
     STATE_ICONS = {
         "forwards": [
-            [K,K,K,K,K,K,K,K],
-            [K,G,G,K,K,G,G,K],
-            [K,G,G,K,K,G,G,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,G,K,K,K,K,G,K],
-            [K,K,G,G,G,G,K,K],
-            [K,K,K,K,K,K,K,K]
+            0b00000000,
+            0b01100110,
+            0b01100110,
+            0b00000000,
+            0b00000000,
+            0b01000010,
+            0b00111100,
+            0b00000000
         ],
         "stopped": [
-            [K,K,K,K,K,K,K,K],
-            [K,R,R,K,K,R,R,K],
-            [K,R,R,K,K,R,R,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,R,R,K,K,K],
-            [K,K,R,K,K,R,K,K],
-            [K,K,K,R,R,K,K,K],
-            [K,K,K,K,K,K,K,K]
+            0b00000000,
+            0b01100110,
+            0b01100110,
+            0b00000000,
+            0b00011000,
+            0b00100100,
+            0b00011000,
+            0b00000000
         ],
         "dodge": [
-            [K,K,K,K,K,K,K,K],
-            [K,Y,Y,K,K,Y,Y,K],
-            [K,Y,Y,K,K,Y,Y,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,Y,K,K,Y,Y,K,K],
-            [K,K,Y,Y,K,K,Y,K],
-            [K,K,K,K,K,K,K,K]
+            0b00000000,
+            0b01100110,
+            0b01100110,
+            0b00000000,
+            0b00000000,
+            0b01001100,
+            0b00110010,
+            0b00000000
         ]
     }
     
@@ -210,7 +210,7 @@ class RandomMotionActivity(object):
                         # Obstacle detected
                         self._motion.stop()
                         self._obstacleLedOn()
-                        self._ledMatrix.updateDisplayFromMatrix(RandomMotionActivity.STATE_ICONS["stopped"])
+                        self._ledMatrix.updateDisplayFromRows(redRows=RandomMotionActivity.STATE_ICONS["stopped"])
                         
                         goingForwards = False
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
@@ -224,16 +224,16 @@ class RandomMotionActivity(object):
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
                         
                         # Rotate once at least
-                        self._ledMatrix.updateDisplayFromMatrix(RandomMotionActivity.STATE_ICONS["dodge"], BiColorLedMatrix.BLINK_2HZ)
+                        self._ledMatrix.updateDisplayFromRows(RandomMotionActivity.STATE_ICONS["dodge"],RandomMotionActivity.STATE_ICONS["dodge"], BiColorLedMatrix.BLINK_2HZ)
                         await self._rotate()
-                        while self._distanceSensor.read()  < RandomMotionActivity.DISTANCE_TO_OBSTACLE:                        
+                        while self._distanceSensor.read() < RandomMotionActivity.DISTANCE_TO_OBSTACLE:                        
                             await self._rotate()
                             
                         self._obstacleLedOff()
                         
                     elif not goingForwards:
                         
-                        self._ledMatrix.updateDisplayFromMatrix(RandomMotionActivity.STATE_ICONS["forwards"])
+                        self._ledMatrix.updateDisplayFromRows(greenRows=RandomMotionActivity.STATE_ICONS["forwards"])
                         goingForwards = True
                         self._motion.setThrottle(RandomMotionActivity.DRIVE_THROTTLE)
                         self._motion.goForwards()

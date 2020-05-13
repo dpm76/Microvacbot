@@ -5,7 +5,6 @@ Created on 30 mar. 2020
 '''
 from micropython import const
 from uvacbot.io.esp8266 import Connection
-from uvacbot.ui.bicolor_led_matrix import R,G,Y,K
 
 
 class _RemoteConnection(Connection):
@@ -24,47 +23,47 @@ class RemoteControlledActivity(object):
     SLOW_THROTTLE = const(60)
     ROTATION_THROTTLE = const(60)
     
-    #TODO: 20200511 DPM Replace by byte-arrays
-    MOTION_MATRICES = [
+    STATE_MATRICES = [
+        
         [
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,G,G,G,G,G,K,K],
-            [K,K,G,G,G,K,K,K],
-            [K,K,K,G,K,K,K,K],
-            [K,K,K,K,K,K,K,K]            
+            0b00000000,
+            0b00000000,
+            0b00000000,
+            0b00000000,
+            0b01111100,
+            0b00111000,
+            0b00010000,
+            0b00000000
         ],
         [
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,R,K,K,K,K],
-            [K,K,R,R,R,K,K,K],
-            [K,R,R,R,R,R,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K]            
+            0b00000000,
+            0b00010000,
+            0b00111000,
+            0b01111100,
+            0b00000000,
+            0b00000000,
+            0b00000000,
+            0b00000000
         ],
         [
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,Y,K,K,K,K],
-            [K,K,Y,Y,K,K,K,K],
-            [K,Y,Y,Y,K,K,K,K],
-            [K,K,Y,Y,K,K,K,K],
-            [K,K,K,Y,K,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K]
+            0b00000000,
+            0b00010000,
+            0b00110000,
+            0b01110000,
+            0b00110000,
+            0b00010000,
+            0b00000000,
+            0b00000000
         ],
         [
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,Y,K,K,K],
-            [K,K,K,K,Y,Y,K,K],
-            [K,K,K,K,Y,Y,Y,K],
-            [K,K,K,K,Y,Y,K,K],
-            [K,K,K,K,Y,K,K,K],
-            [K,K,K,K,K,K,K,K],
-            [K,K,K,K,K,K,K,K]            
+            0b00000000,
+            0b00001000,
+            0b00001100,
+            0b00001110,
+            0b00001100,
+            0b00001000,
+            0b00000000,
+            0b00000000
         ]
     ]
     
@@ -143,17 +142,18 @@ class RemoteControlledActivity(object):
             if cmd == "FWD":
                 self._motion.setThrottle(RemoteControlledActivity.DRIVE_THROTTLE)
                 self._motion.goForwards()
-                self._ledMatrix.updateDisplayFromMatrix(RemoteControlledActivity.MOTION_MATRICES[0]);
+                self._ledMatrix.updateDisplayFromRows(greenRows=RemoteControlledActivity.STATE_MATRICES[0])
             elif cmd == "BAK":
                 self._motion.setThrottle(RemoteControlledActivity.SLOW_THROTTLE)
                 self._motion.goBackwards()
-                self._ledMatrix.updateDisplayFromMatrix(RemoteControlledActivity.MOTION_MATRICES[1]);
+                self._ledMatrix.updateDisplayFromRows(redRows=RemoteControlledActivity.STATE_MATRICES[1]);
             elif cmd == "TLE":
                 self._motion.turnLeft()
-                self._ledMatrix.updateDisplayFromMatrix(RemoteControlledActivity.MOTION_MATRICES[2]);
+                #The led-matrix is placed with its base line to the forward direction, therefore left and right are reversed 
+                self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[3],RemoteControlledActivity.STATE_MATRICES[3]);
             elif cmd == "TRI":
                 self._motion.turnRight()
-                self._ledMatrix.updateDisplayFromMatrix(RemoteControlledActivity.MOTION_MATRICES[3]);
+                self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[2],RemoteControlledActivity.STATE_MATRICES[2]);
             else:
                 self._motion.stop()
                 self._ledMatrix.displayOff()
