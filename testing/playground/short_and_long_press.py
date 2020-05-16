@@ -25,7 +25,7 @@ if __name__ == "__main__":
     
     # The switch button is connected to the PC13 CPU-line on the Nucleo-F767ZI and Nucleo-L476RG boards.
     # Please, check in case of different boards before proceed.
-    b = Button(Pin.cpu.C13).setLongPressHandler(callback).setShortPressHandler(lambda _: print("short"))
+    b = Button(Pin.cpu.C13, lowOnPress=False).setLongPressHandler(callback).setShortPressHandler(lambda _: print("short"))
 
     while i > 0:
         sleep_ms(100)

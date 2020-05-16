@@ -35,6 +35,9 @@ class Pin(object):
     
     IRQ_FALLING = 2
     IRQ_RISING = 3
+
+    PULL_DOWN = 4
+    PULL_UP = 5
     
     board = Board()
     cpu = PinCpu()
