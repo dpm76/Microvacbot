@@ -13,14 +13,14 @@ class Button(object):
     This button can handle short and long press
     '''
 
-    def __init__(self, pin, timerId = 1, thresholdTime = 1000, lowOnPress=False):
+    def __init__(self, pin, timerId = 6, thresholdTime = 1000, lowOnPress=False):
         '''
         Constructor
         
         @param pin: Pin object where the button is
-        @param timerId: (default=1) Timer to determine the long press
+        @param timerId: (default=6) Timer to determine the long press
         @param thresholdTime: Waiting time to determine a long press as milliseconds
-        @param lowOnPress: Inidicates whether the value is 0 when the button is pressed (pull-down)
+        @param lowOnPress: Indicates whether the value is 0 when the button is pressed (pull-down)
                             The user (blue) button on the NUCLEO-L476RG board must have this parameter as True,
                             but for the case of the NUCLEO-F767ZI board, this parameter must be False
         '''
@@ -44,10 +44,10 @@ class Button(object):
     def _onPinIrq(self, _):
         
         self._pin.irq(handler=None)
+        self._timer.callback(None)
         self._timer.deinit()
         #debounce signal 
         sleep_ms(50)
-        print("value: {0}".format(self._pin.value()))
         if self._pin.value() == (1 if self._lowOnPress else 0):            
             
             if not self._isTimeout:        
@@ -86,6 +86,13 @@ class Button(object):
         self._longPressHandler = handler
         
         return self
-    
-    #TODO: 20200516 DMP Add a cleanup method: de-init the timer and remove handler for the pin's IRQ
 
+    
+    def cleanup(self):
+        '''
+        Releases resources
+        Deinits the timer and removes handler for the pin's IRQ
+        '''
+        
+        self._timer.deinit()
+        self._pin.irq(handler=None)

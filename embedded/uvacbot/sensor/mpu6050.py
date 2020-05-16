@@ -10,7 +10,6 @@ from micropython import const
 from utime import sleep_ms
 from uvacbot.io.i2c import I2CDevice
 
-
 class Mpu6050(I2CDevice):
     
     BASE_DIR = "/flash/userapp/uvacbot/sensor/"
@@ -317,11 +316,16 @@ class Mpu6050(I2CDevice):
         self.setI2CBypassEnabled(True)
         # load DMP code into memory banks
         with open(Mpu6050.FILE_PATH_DMP_MEMORY, "rb") as file:
-            dmpMemory = bytes(file.read())
-            file.close()
-            #MPU6050_DMP_CODE_SIZE = 1929
-            self.writeMemoryBlock(dmpMemory, len(dmpMemory), 0, 0)
+            
+            bank = 0
+            dmpMemory = bytes(file.read(256))
+            while len(dmpMemory) != 0:
+                self.writeMemoryBlock(dmpMemory, len(dmpMemory), bank, 0)
+                bank += 1
+                dmpMemory = bytes(file.read(256))
+            
             del dmpMemory
+            file.close()
         # write DMP configuration
         with open(Mpu6050.FILE_PATH_DMP_CONFIG, "rb") as file:
             dmpConfig = bytes(file.read())

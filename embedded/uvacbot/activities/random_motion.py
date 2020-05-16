@@ -107,8 +107,7 @@ class RandomMotionActivity(object):
         Finalizes and releases the used resources
         '''
         
-        self._motion.stop()
-        self._distanceSensor.cleanup()        
+        self._motion.stop()      
         self._obstacleLedOff()
     
     
