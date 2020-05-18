@@ -5,6 +5,7 @@ Created on 30 mar. 2020
 '''
 from micropython import const
 from uvacbot.io.esp8266 import Connection
+from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix, hexStringToInt
 
 
 class _RemoteConnection(Connection):
@@ -131,6 +132,48 @@ class RemoteControlledActivity(object):
     def isRunning(self):
         
         return self._isrunning
+        
+    
+    def _dispatchLedMatrixCmd(self, cmd):
+        
+        params = cmd.split(':')
+        
+        if len(params) > 2:
+            
+            redRows = []
+            greenRows = []
+            
+            red = 0
+            green = 0
+            
+            for row in range(8):
+                
+                charIndex = row*2
+                red = hexStringToInt(params[1][charIndex:charIndex+2]) if len(params[1]) >= charIndex+2 else red
+                green = hexStringToInt(params[2][charIndex:charIndex+2]) if len(params[2]) >= charIndex+2 else green
+                
+                redRows += [red]
+                greenRows += [green]
+                
+            if len(params) > 3:
+                
+                if params[3] == "1":
+                    blinkMode = BiColorLedMatrix.BLINK_1HZ
+                elif params[3] == "2":
+                    blinkMode = BiColorLedMatrix.BLINK_2HZ
+                elif params[3] == "H":
+                    blinkMode = BiColorLedMatrix.BLINK_HALF_HZ
+                else:
+                    blinkMode = BiColorLedMatrix.BLINK_OFF
+            else:
+                blinkMode = BiColorLedMatrix.BLINK_OFF
+                
+            self._ledMatrix.updateDisplayFromRows(redRows, greenRows, blinkMode)
+        
+        else:
+            
+            self._ledMatrix.displayOff()
+            self._ledMatrix.clear()
     
     
     def dispatchCommand(self, message):
@@ -154,6 +197,8 @@ class RemoteControlledActivity(object):
             elif cmd == "TRI":
                 self._motion.turnRight()
                 self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[2],RemoteControlledActivity.STATE_MATRICES[2]);
+            elif cmd.startswith("LMX"):
+                self._dispatchLedMatrixCmd(cmd)
             else:
                 self._motion.stop()
                 self._ledMatrix.displayOff()
