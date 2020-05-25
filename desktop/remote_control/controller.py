@@ -6,7 +6,7 @@ Created on 6 jul. 2017
 from socket import socket, AF_INET, SOCK_STREAM
 from time import sleep
 
-from device.joystick import BUTTON_BACK, AXIS_LEFT_H, AXIS_LEFT_V, BUTTON_X, \
+from device.joystick import BUTTON_BACK, AXIS_LEFT_H, AXIS_LEFT_V, BUTTON_X, BUTTON_Y,\
     BUTTON_A, BUTTON_B
 from device.manager import JoystickManager
 
@@ -125,10 +125,10 @@ class Controller(object):
                 self._started = False
                 
             elif index == BUTTON_X:
-                self._socket.send(b"LED:2")
-            
+                self._socket.send(b"EXP:2")
+            elif index == BUTTON_Y:
+                self._socket.send(b"EXP:3")            
             elif index == BUTTON_A:
-                self._socket.send(b"LED:1")
-            
+                self._socket.send(b"EXP:0")            
             elif index == BUTTON_B:
-                self._socket.send(b"LED:3")
+                self._socket.send(b"EXP:1")

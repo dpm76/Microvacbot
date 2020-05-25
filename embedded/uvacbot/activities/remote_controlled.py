@@ -4,6 +4,7 @@ Created on 30 mar. 2020
 @author: David
 '''
 from micropython import const
+from utime import sleep_ms
 from uvacbot.io.esp8266 import Connection
 from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix, hexStringToInt
 
@@ -65,6 +66,88 @@ class RemoteControlledActivity(object):
             0b00001000,
             0b00000000,
             0b00000000
+        ]
+    ]
+    
+    EXPRESION_MATRICES = [
+        [
+            None,
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b01000010,
+                0b00111100,
+                0b00000000,
+                0b00000000
+            ]
+        ],
+        [
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b00011000,
+                0b00100100,
+                0b00011000,
+                0b00000000
+            ],
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b00000000
+            ]
+        ],
+        [
+            [
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b01111110,
+                0b00011000,
+                0b00011000,
+                0b00000000
+            ],
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b01111110,
+                0b00000000,
+                0b00000000,
+                0b00000000
+            ]
+        ],        
+        [
+            [
+                0b00001111,
+                0b00001111,
+                0b00001111,
+                0b00001111,
+                0b11110000,
+                0b11110000,
+                0b11110000,
+                0b11110000
+            ],
+            [
+                0b11110000,
+                0b11110000,
+                0b11110000,
+                0b11110000,
+                0b11111111,
+                0b11111111,
+                0b11111111,
+                0b11111111
+            ]
         ]
     ]
     
@@ -132,6 +215,19 @@ class RemoteControlledActivity(object):
     def isRunning(self):
         
         return self._isrunning
+    
+    
+    def _dispatchExpression(self, cmd):
+        
+        params = cmd.split(':')
+        if len(params) == 2:
+            
+            exprId = int(params[1])
+            if exprId < len(RemoteControlledActivity.EXPRESION_MATRICES):
+            
+                self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.EXPRESION_MATRICES[exprId][0], RemoteControlledActivity.EXPRESION_MATRICES[exprId][1])
+                sleep_ms(1000)
+                self._ledMatrix.displayOff()
         
     
     def _dispatchLedMatrixCmd(self, cmd):
@@ -197,6 +293,8 @@ class RemoteControlledActivity(object):
             elif cmd == "TRI":
                 self._motion.turnRight()
                 self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[2],RemoteControlledActivity.STATE_MATRICES[2]);
+            elif cmd.startswith("EXP"):
+                self._dispatchExpression(cmd)
             elif cmd.startswith("LMX"):
                 self._dispatchLedMatrixCmd(cmd)
             else:
