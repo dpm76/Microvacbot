@@ -144,12 +144,10 @@ class I2CDevice:
         self._writeByte(reg, b)
 
     
-    def _readBlock(self, reg, size):
+    def _readBlock(self, reg, buf, size):
         
         #TODO: 20190912 DPM Implement true burst read
-        data = []
-        while len(data) < size:
-            data.append(self._readUnsignedByte(reg))
-            
-        return data
-            
+        i = 0        
+        while i != size:
+            buf[i] = self._readUnsignedByte(reg)
+            i += 1            

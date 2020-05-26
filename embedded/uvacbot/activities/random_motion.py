@@ -1,6 +1,7 @@
 
 from random import random, randrange
 from uasyncio import get_event_loop, sleep_ms, sleep
+from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix
 
 
 class RandomMotionActivity(object):
@@ -18,6 +19,39 @@ class RandomMotionActivity(object):
     ROTATION_MIN_TIME = 500 #microseconds
     ROTATION_MAX_TIME = 1000 #microseconds
     COROUTINE_SLEEP_TIME = 500 # milliseconds
+    
+    STATE_ICONS = {
+        "forwards": [
+            0b00000000,
+            0b01100110,
+            0b01100110,
+            0b00000000,
+            0b00000000,
+            0b01000010,
+            0b00111100,
+            0b00000000
+        ],
+        "stopped": [
+            0b00000000,
+            0b01100110,
+            0b01100110,
+            0b00000000,
+            0b00011000,
+            0b00100100,
+            0b00011000,
+            0b00000000
+        ],
+        "dodge": [
+            0b00000000,
+            0b01100110,
+            0b01100110,
+            0b00000000,
+            0b00000000,
+            0b01001100,
+            0b00110010,
+            0b00000000
+        ]
+    }
     
     def __init__(self, motion, distanceSensor, backTime=2):
         '''
@@ -37,6 +71,7 @@ class RandomMotionActivity(object):
         self._running = False
         
         self._obstacleLed = None
+        self._ledMatrix = None
         
         loop = get_event_loop()
         loop.create_task(self.run())
@@ -72,8 +107,7 @@ class RandomMotionActivity(object):
         Finalizes and releases the used resources
         '''
         
-        self._motion.stop()
-        self._distanceSensor.cleanup()        
+        self._motion.stop()      
         self._obstacleLedOff()
     
     
@@ -102,6 +136,43 @@ class RandomMotionActivity(object):
         self._running = False
         
         
+    def setDeviceProvider(self, deviceProvider):
+        '''
+        Sets the object which provides the devices
+        
+        @param deviceProvider: The device provider
+        '''
+        
+        self._ledMatrix = deviceProvider.getLedMatrix()
+    
+    
+    def getIconRows(self):
+        '''
+        @return: The icon of this activity
+        '''
+        
+        return ([
+            0b00000000,
+            0b00000000,
+            0b11000000,
+            0b00100000,
+            0b00010010,
+            0b00001111,
+            0b00000010,
+            0b00000000
+            ], 
+            [
+            0b00000000,
+            0b00000010,
+            0b00001111,
+            0b00010010,
+            0b00100000,
+            0b11000000,
+            0b00000000,
+            0b00000000
+        ])
+        
+    
     async def _rotate(self):
         
         if random() < 0.5:
@@ -138,10 +209,13 @@ class RandomMotionActivity(object):
                         # Obstacle detected
                         self._motion.stop()
                         self._obstacleLedOn()
-                            
-                        # Go back
+                        self._ledMatrix.updateDisplayFromRows(redRows=RandomMotionActivity.STATE_ICONS["stopped"])
+                        
                         goingForwards = False
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
+                        
+                        # Go back
+                        self._ledMatrix.setBlink(BiColorLedMatrix.BLINK_2HZ)
                         self._motion.setThrottle(RandomMotionActivity.SLOW_THROTTLE)
                         self._motion.goBackwards()
                         await sleep(self._backTime)
@@ -149,18 +223,19 @@ class RandomMotionActivity(object):
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
                         
                         # Rotate once at least
+                        self._ledMatrix.updateDisplayFromRows(RandomMotionActivity.STATE_ICONS["dodge"],RandomMotionActivity.STATE_ICONS["dodge"], BiColorLedMatrix.BLINK_2HZ)
                         await self._rotate()
-                        while self._distanceSensor.read()  < RandomMotionActivity.DISTANCE_TO_OBSTACLE:                        
+                        while self._distanceSensor.read() < RandomMotionActivity.DISTANCE_TO_OBSTACLE:                        
                             await self._rotate()
                             
                         self._obstacleLedOff()
                         
                     elif not goingForwards:
                         
+                        self._ledMatrix.updateDisplayFromRows(greenRows=RandomMotionActivity.STATE_ICONS["forwards"])
                         goingForwards = True
                         self._motion.setThrottle(RandomMotionActivity.DRIVE_THROTTLE)
                         self._motion.goForwards()
-    
                         
                 await sleep_ms(RandomMotionActivity.COROUTINE_SLEEP_TIME)
                 
