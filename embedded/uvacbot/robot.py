@@ -10,6 +10,7 @@ from utime import sleep_ms as utime_sleep_ms
 from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix
 from uvacbot.ui.button import Button
 from uvacbot.ui.heartbeat import Heartbeat
+from uvacbot.ui.buzzer import Buzzer, Sequencer
 
 
 class Robot(object):
@@ -17,13 +18,14 @@ class Robot(object):
     Handles the common objects, launches activities and keeps them running
     '''
 
-    _ledMatrix=None
-    
-
     def __init__(self):
         '''
         Constructor
         '''
+        
+        self._ledMatrix = None
+        self._buzzer = None
+        self._sequencer = None
         
         self._heartbeatLed = LED(1)
         self._heartbeat = Heartbeat(self._heartbeatLed)
@@ -46,6 +48,25 @@ class Robot(object):
             self._ledMatrix.setDim(0x8)
         
         return self._ledMatrix
+    
+    
+    def getBuzzer(self):
+        
+        if self._buzzer == None:
+            
+            #TODO: 20200526 DPM Get buzzer pin and timer-channel pair from settings
+            self._buzzer = Buzzer(Pin.board.D12, 3, 1)
+            
+        return self._buzzer
+            
+            
+    def getSequencer(self):
+        
+        if self._sequencer == None:
+            
+            self._sequencer = Sequencer(self.getBuzzer())
+            
+        return self._sequencer
 
 
     def addActivity(self, activity):
@@ -114,6 +135,15 @@ class Robot(object):
         if self._ledMatrix != None:
             
             self._ledMatrix.cleanup()
+            
+        #20200526 DPM Note that the sequencer's cleanup-method calls the buzzer's already
+        if self._sequencer != None:
+            
+            self._sequencer.cleanup()
+            
+        elif self._buzzer != None:
+            
+            self._buzzer.cleanup()
         
     
     def _testLedMatrix(self):

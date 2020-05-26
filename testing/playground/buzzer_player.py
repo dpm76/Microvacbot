@@ -3,6 +3,11 @@ Created on 12 abr. 2020
 
 @author: David
 '''
+
+import sys
+sys.path.append("/flash/userapp")
+
+
 from utime import sleep_ms
 from uvacbot.ui.buzzer import Buzzer, Sequencer
 
@@ -13,7 +18,7 @@ if __name__ == '__main__':
     
     def beep():
         
-        b = Buzzer(Pin.board.D10, 4, 3)
+        b = Buzzer(Pin.board.D12, 3, 1)
         try:
             
             b.buzz(220.0, 250)
@@ -131,13 +136,13 @@ if __name__ == '__main__':
         seq += "B#FBAB#FBA)"
         seq += "B#FBAB 3 1   "
         
-        s = Sequencer(Buzzer(Pin.board.D10, 4, 3))
+        s = Sequencer(Buzzer(Pin.board.D12, 3, 1))
         try:            
             s.play(seq)
         finally:
             s.cleanup()
     
     
-    beep()
-    #playScore()
+    #beep()
+    playScore()
     
