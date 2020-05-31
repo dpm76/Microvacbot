@@ -9,8 +9,8 @@ from uasyncio import get_event_loop, sleep_ms as ua_sleep_ms
 from utime import sleep_ms as utime_sleep_ms
 from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix
 from uvacbot.ui.button import Button
+from uvacbot.ui.buzzer import Buzzer, Sequencer, E, S, Q, H
 from uvacbot.ui.heartbeat import Heartbeat
-from uvacbot.ui.buzzer import Buzzer, Sequencer
 
 
 class Robot(object):
@@ -29,7 +29,7 @@ class Robot(object):
         
         self._heartbeatLed = LED(1)
         self._heartbeat = Heartbeat(self._heartbeatLed)
-        self._testLedMatrix()
+        self._testUserInterface()
         self._running = False
         self._activity = None
         self._activities = []
@@ -146,15 +146,39 @@ class Robot(object):
             self._buzzer.cleanup()
         
     
-    def _testLedMatrix(self):
+    def _testUserInterface(self):
         
         ledMatrix = self.getLedMatrix()
+        buzzer = self.getBuzzer()
+        
         ledMatrix.updateDisplayFromRows(greenRows=bytes([0xff]*8))
-        utime_sleep_ms(500)
+        
+        buzzer.buzz(110, E-S)
+        utime_sleep_ms(S)
+        buzzer.buzz(110, E-S)
+        utime_sleep_ms(S)
+        buzzer.buzz(880, Q-S)
+        utime_sleep_ms(H+S)
+        
+        ledMatrix.updateDisplayFromRows([0xf0,0xf0,0xf0,0xf0,0xff,0xff,0xff,0xff], [0xff,0xff,0xff,0xff,0x0f,0x0f,0x0f,0x0f])
+        
+        buzzer.buzz(440, E)
+        buzzer.buzz(220, E)
+        buzzer.buzz(110, E+S)
+        utime_sleep_ms(S)
+
         ledMatrix.updateDisplayFromRows(redRows=bytes([0xff]*8))
-        utime_sleep_ms(500)
+
+        buzzer.buzz(880, E)
+        buzzer.buzz(220, E)
+        buzzer.buzz(440, E+S)
+        utime_sleep_ms(S)
+
         ledMatrix.updateDisplayFromRows(bytes([0xff]*8), bytes([0xff]*8))
-        utime_sleep_ms(500)
+
+        buzzer.buzz(880, Q)
+        buzzer.buzz(440, H+Q)
+        
         ledMatrix.displayOff()
         ledMatrix.clear()
         

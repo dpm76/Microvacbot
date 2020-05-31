@@ -9,6 +9,13 @@ from pyb import Timer
 from utime import sleep_ms, ticks_ms, ticks_diff
 
 
+W = const(1000)  # Whole
+H = const(500)  # Half
+Q = const(250) # Quarter
+E = const(125) # Eighth
+S = const(62) # Sixteenth
+
+
 class Buzzer(object):
     '''
     Plays sounds through the buzzer module
