@@ -86,6 +86,9 @@ class Robot(object):
         
         button.cleanup()
         
+        self.getBuzzer().buzz(440, S)
+        self.getBuzzer().buzz(440, S)
+        
         self._activity = self._activities[self._activityIndex]
         self._activity.setDeviceProvider(self)
         
@@ -99,6 +102,8 @@ class Robot(object):
         '''
         Preselects an activity and shows its icon
         '''
+        
+        self.getBuzzer().buzz(220, E)
         
         self._activityIndex = (self._activityIndex + 1) % len(self._activities)
         
@@ -204,7 +209,7 @@ class Robot(object):
     def _toggleActivity(self):
         
         # First at all try to debounce
-        utime_sleep_ms(100)
+        self.getBuzzer().buzz(440, E)
         if Switch().value():
             if self._activity == None or self._activity.isRunning():
                 
