@@ -1,3 +1,7 @@
+import sys
+sys.path.append("/flash/userapp")
+
+
 import pyb
 import utime
 
@@ -18,7 +22,7 @@ alarm2 = {
 
 def playAlarm(params):
 
-    pwm = Pwm(pyb.Pin.board.D10, 4, 3, 880.0)
+    pwm = Pwm(pyb.Pin.board.D12, 3, 1, 880.0)
     for i in range(10):
         for j in range (params['repeat']):
             pwm.setDutyPerc(50.0)

@@ -14,6 +14,7 @@ CN6.8 (VIN)                 5V-12V Battery
 
 CN5.10(I2C1.SCL)            I2C_line.SCL        MPU6050, BILED-MATRIX
 CN5.9 (I2C1.SDA)            I2C_line.SDA        idem
+CN5.5 (PWM3/1, GPIO.D12)    Buzzer              
 CN5.4 (GPIO.D11)            DRV8835.B.PHASE     reverse pin, left motor
 CN5.3 (PWM4/1, GPIO.D10)    DRV8835.B.ENBL      throttle left motor
 CN5.2 (PWM8/2, GPIO.D9)     DRV8835.A.ENBL      throttle right motor
