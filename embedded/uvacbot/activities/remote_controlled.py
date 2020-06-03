@@ -4,7 +4,9 @@ Created on 30 mar. 2020
 @author: David
 '''
 from micropython import const
+from utime import sleep_ms
 from uvacbot.io.esp8266 import Connection
+from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix, hexStringToInt
 
 
 class _RemoteConnection(Connection):
@@ -64,6 +66,88 @@ class RemoteControlledActivity(object):
             0b00001000,
             0b00000000,
             0b00000000
+        ]
+    ]
+    
+    EXPRESION_MATRICES = [
+        [
+            None,
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b01000010,
+                0b00111100,
+                0b00000000,
+                0b00000000
+            ]
+        ],
+        [
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b00011000,
+                0b00100100,
+                0b00011000,
+                0b00000000
+            ],
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b00000000
+            ]
+        ],
+        [
+            [
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b00000000,
+                0b01111110,
+                0b00011000,
+                0b00011000,
+                0b00000000
+            ],
+            [
+                0b00000000,
+                0b01100110,
+                0b01100110,
+                0b00000000,
+                0b01111110,
+                0b00000000,
+                0b00000000,
+                0b00000000
+            ]
+        ],        
+        [
+            [
+                0b00001111,
+                0b00001111,
+                0b00001111,
+                0b00001111,
+                0b11110000,
+                0b11110000,
+                0b11110000,
+                0b11110000
+            ],
+            [
+                0b11110000,
+                0b11110000,
+                0b11110000,
+                0b11110000,
+                0b11111111,
+                0b11111111,
+                0b11111111,
+                0b11111111
+            ]
         ]
     ]
     
@@ -133,6 +217,61 @@ class RemoteControlledActivity(object):
         return self._isrunning
     
     
+    def _dispatchExpression(self, cmd):
+        
+        params = cmd.split(':')
+        if len(params) == 2:
+            
+            exprId = int(params[1])
+            if exprId < len(RemoteControlledActivity.EXPRESION_MATRICES):
+            
+                self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.EXPRESION_MATRICES[exprId][0], RemoteControlledActivity.EXPRESION_MATRICES[exprId][1])
+                sleep_ms(1000)
+                self._ledMatrix.displayOff()
+        
+    
+    def _dispatchLedMatrixCmd(self, cmd):
+        
+        params = cmd.split(':')
+        
+        if len(params) > 2:
+            
+            redRows = []
+            greenRows = []
+            
+            red = 0
+            green = 0
+            
+            for row in range(8):
+                
+                charIndex = row*2
+                red = hexStringToInt(params[1][charIndex:charIndex+2]) if len(params[1]) >= charIndex+2 else red
+                green = hexStringToInt(params[2][charIndex:charIndex+2]) if len(params[2]) >= charIndex+2 else green
+                
+                redRows += [red]
+                greenRows += [green]
+                
+            if len(params) > 3:
+                
+                if params[3] == "1":
+                    blinkMode = BiColorLedMatrix.BLINK_1HZ
+                elif params[3] == "2":
+                    blinkMode = BiColorLedMatrix.BLINK_2HZ
+                elif params[3] == "H":
+                    blinkMode = BiColorLedMatrix.BLINK_HALF_HZ
+                else:
+                    blinkMode = BiColorLedMatrix.BLINK_OFF
+            else:
+                blinkMode = BiColorLedMatrix.BLINK_OFF
+                
+            self._ledMatrix.updateDisplayFromRows(redRows, greenRows, blinkMode)
+        
+        else:
+            
+            self._ledMatrix.displayOff()
+            self._ledMatrix.clear()
+    
+    
     def dispatchCommand(self, message):
         
         cmd = message.strip()
@@ -154,6 +293,10 @@ class RemoteControlledActivity(object):
             elif cmd == "TRI":
                 self._motion.turnRight()
                 self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[2],RemoteControlledActivity.STATE_MATRICES[2]);
+            elif cmd.startswith("EXP"):
+                self._dispatchExpression(cmd)
+            elif cmd.startswith("LMX"):
+                self._dispatchLedMatrixCmd(cmd)
             else:
                 self._motion.stop()
                 self._ledMatrix.displayOff()

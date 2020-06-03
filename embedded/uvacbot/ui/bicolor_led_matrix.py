@@ -13,6 +13,22 @@ R = RED = const(2)
 Y = YELLOW = const(3)
 
 
+def hexStringToInt(hexStr):
+    '''
+    Converts a hexadecimal-coded string number into an integer.
+    If the format is not recognized then it returns 0
+    
+    @param hexStr: String coding a hexadecimal number
+    
+    @return: The value of the passed number as integer or 0 in case of unknown format
+    '''
+    
+    try:
+        return int(hexStr, 16)
+    except ValueError:
+        return 0
+
+
 class BiColorLedMatrix(I2CDevice):
     '''
     Controller for the Adafruit's Bicolor LED 8x8 Matrix, which uses the HT16K33 chip
