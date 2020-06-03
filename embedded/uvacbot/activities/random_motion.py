@@ -72,6 +72,7 @@ class RandomMotionActivity(object):
         
         self._obstacleLed = None
         self._ledMatrix = None
+        self._buzzer = None
         
         loop = get_event_loop()
         loop.create_task(self.run())
@@ -144,6 +145,7 @@ class RandomMotionActivity(object):
         '''
         
         self._ledMatrix = deviceProvider.getLedMatrix()
+        self._buzzer = deviceProvider.getBuzzer()
     
     
     def getIconRows(self):
@@ -183,6 +185,7 @@ class RandomMotionActivity(object):
             
             self._motion.turnLeft()
         
+        self._buzzer.slide(220, 440, 250)
         await sleep_ms(randrange(RandomMotionActivity.ROTATION_MIN_TIME, RandomMotionActivity.ROTATION_MAX_TIME))
         self._motion.stop()
         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
@@ -210,15 +213,19 @@ class RandomMotionActivity(object):
                         self._motion.stop()
                         self._obstacleLedOn()
                         self._ledMatrix.updateDisplayFromRows(redRows=RandomMotionActivity.STATE_ICONS["stopped"])
+                        self._buzzer.trill(220, 125)
+                        await sleep_ms(31)
+                        self._buzzer.trill(220, 125)
                         
                         goingForwards = False
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
                         
                         # Go back
                         self._ledMatrix.setBlink(BiColorLedMatrix.BLINK_2HZ)
+                        self._buzzer.trill(220, 250)
                         self._motion.setThrottle(RandomMotionActivity.SLOW_THROTTLE)
                         self._motion.goBackwards()
-                        await sleep(self._backTime)
+                        await sleep_ms(self._backTime * 1000)
                         self._motion.stop()
                         await sleep(RandomMotionActivity.AFTER_STOP_TIME)
                         
@@ -233,6 +240,7 @@ class RandomMotionActivity(object):
                     elif not goingForwards:
                         
                         self._ledMatrix.updateDisplayFromRows(greenRows=RandomMotionActivity.STATE_ICONS["forwards"])
+                        self._buzzer.buzz(220, 125)
                         goingForwards = True
                         self._motion.setThrottle(RandomMotionActivity.DRIVE_THROTTLE)
                         self._motion.goForwards()
