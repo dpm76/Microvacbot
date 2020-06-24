@@ -182,11 +182,11 @@ class Esp8266(object):
         else:
             self._write("AT+CWJAP_CUR=\"{0}\"".format(ssid))
             
-        data = self._readline()
+        data = self._readline() or ""
         isError = data.startswith(bytes("FAIL", Esp8266.BYTES_ENCODING)) 
         while not isError and not data.startswith(bytes("OK", Esp8266.BYTES_ENCODING)):
             sleep_ms(100)
-            data = self._readline()
+            data = self._readline() or ""
             isError = data.startswith(bytes("FAIL", Esp8266.BYTES_ENCODING))
         
         self._flushRx()

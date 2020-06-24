@@ -20,6 +20,14 @@ class _RemoteConnection(Connection):
 
 class RemoteControlledActivity(object):
     
+    #TODO: 20200624 DPM Get network options from settings
+#     NETWORK_AP_ENABLED = True
+    #NETWORK_CLIENT_MODE_ENABLED = True
+    NETWORK_AP_SSID = "Microvacbot_AP"
+#     NETWORK_AP_PASSWD = ""
+    #NETWORK_CLIENT_MODE_SSID = "Nenukines-Haus"
+    #NETWORK_CLIENT_MODE_PASSWD = "8V83QGJR773E9767"
+    
     #TODO: 20200511 DPM Get throttle values from settings
     DRIVE_THROTTLE = const(80)
     SLOW_THROTTLE = const(60)
@@ -160,9 +168,32 @@ class RemoteControlledActivity(object):
         self._esp.start()
         assert self._esp.isPresent()
         #TODO: 20200511 DPM Move ESP module initialization to the robot-class
-        #TODO: 20200511 DPM Get IP configuration from settings
-        self._esp.setStaIpAddress("192.168.1.200", "192.168.1.1")
+        #opmode = 0
+#         if RemoteControlledActivity.NETWORK_AP_ENABLED:
+#             opmode = Esp8266.OP_MODE_AP
+            
+#         if RemoteControlledActivity.NETWORK_CLIENT_MODE_ENABLED:
+#             opmode |= Esp8266.OP_MODE_CLIENT
+#              
+#         assert opmode != 0
+#         self._esp.setOperatingMode(opmode)
         
+        self._esp.setOperatingMode(2) #Esp8266.OP_MODE_AP
+        
+        #if RemoteControlledActivity.NETWORK_CLIENT_MODE_ENABLED:
+         
+            #self._esp.join(RemoteControlledActivity.NETWORK_CLIENT_MODE_SSID, RemoteControlledActivity.NETWORK_CLIENT_MODE_PASSWD)
+            #TODO: 20200511 DPM Get IP configuration from settings
+        #self._esp.setStaIpAddress("192.168.1.200", "192.168.1.1")
+            
+#         if RemoteControlledActivity.NETWORK_AP_ENABLED:
+#              
+#             if RemoteControlledActivity.NETWORK_AP_PASSWD != None and RemoteControlledActivity.NETWORK_AP_PASSWD != "":
+#                 self._esp.setAccessPointConfig(RemoteControlledActivity.NETWORK_AP_SSID, RemoteControlledActivity.NETWORK_AP_PASSWD, security=Esp8266.SECURITY_WPA_WPA2)
+#             else:
+        self._esp.setAccessPointConfig(RemoteControlledActivity.NETWORK_AP_SSID)
+        self._esp.setApIpAddress("192.168.4.1", "192.168.4.1")
+         
         self._isrunning = False
         
         self._ledMatrix = None
