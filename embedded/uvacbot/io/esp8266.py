@@ -234,7 +234,7 @@ class Esp8266(object):
         Sets up the AP configuration.
         
         @param ssid: Name of the network
-        @param passwd: Password (optional for open AP)
+        @param passwd: Password (not used for open AP)
         @param channel: WiFi channel (default 1)
         @param security: Security mode, like WEP, WPA or WPA2 (default open)
         '''
