@@ -6,6 +6,8 @@ Created on 16 ago. 2019
 from sys import path
 path.append("/flash/userapp")
 
+#20200727 DPM Import Mpu6050 at first, because of its size. 
+from uvacbot.sensor.mpu6050 import Mpu6050
 from pyb import Pin
 from uvacbot.activities.random_motion import RandomMotionActivity
 from uvacbot.activities.remote_controlled import RemoteControlledActivity
@@ -14,7 +16,6 @@ from uvacbot.engine.motion import MotionController
 from uvacbot.engine.motor import Motor
 from uvacbot.io.esp8266 import Esp8266
 from uvacbot.robot import Robot
-from uvacbot.sensor.mpu6050 import Mpu6050
 from uvacbot.sensor.ultrasound import Ultrasound
 
 PID_KP = 250.0
