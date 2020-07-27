@@ -5,7 +5,7 @@ Created on 30 mar. 2020
 '''
 from micropython import const
 from utime import sleep_ms
-from uvacbot.io.esp8266 import Connection
+from uvacbot.io.esp8266 import Connection, Esp8266
 from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix, hexStringToInt
 
 
@@ -20,13 +20,22 @@ class _RemoteConnection(Connection):
 
 class RemoteControlledActivity(object):
     
+    #TODO: 20200725 DPM Reduce memory use, in order to select network mode on run time.
+    # Network mode selection doesn't fit within the L476RG-MCU's memory 
+    # (128KB, but ~80KB free running Micropython+uasyncio), code shall reduce its memory consumption.
+    
     #TODO: 20200624 DPM Get network options from settings
-#     NETWORK_AP_ENABLED = True
-    #NETWORK_CLIENT_MODE_ENABLED = True
+    NETWORK_AP_ENABLED = False
+    NETWORK_CLIENT_MODE_ENABLED = True
+    
     NETWORK_AP_SSID = "Microvacbot_AP"
-#     NETWORK_AP_PASSWD = ""
-    #NETWORK_CLIENT_MODE_SSID = "Nenukines-Haus"
-    #NETWORK_CLIENT_MODE_PASSWD = "8V83QGJR773E9767"
+    NETWORK_AP_PASSWD = ""
+    NETWORK_AP_IP = "192.168.4.1"
+    
+    NETWORK_CLIENT_MODE_SSID = "Nenukines-Haus"
+    NETWORK_CLIENT_MODE_PASSWD = "8V83QGJR773E9767"
+    NETWORK_CLIENT_IP = "192.168.1.200"
+    NETWORK_CLIENT_GATEWAY = "192.168.1.1"
     
     #TODO: 20200511 DPM Get throttle values from settings
     DRIVE_THROTTLE = const(80)
@@ -168,35 +177,37 @@ class RemoteControlledActivity(object):
         self._esp.start()
         assert self._esp.isPresent()
         #TODO: 20200511 DPM Move ESP module initialization to the robot-class
-        #opmode = 0
-#         if RemoteControlledActivity.NETWORK_AP_ENABLED:
-#             opmode = Esp8266.OP_MODE_AP
+        opmode = 0
+        if RemoteControlledActivity.NETWORK_AP_ENABLED:
+            opmode = Esp8266.OP_MODE_AP
             
-#         if RemoteControlledActivity.NETWORK_CLIENT_MODE_ENABLED:
-#             opmode |= Esp8266.OP_MODE_CLIENT
-#              
-#         assert opmode != 0
-#         self._esp.setOperatingMode(opmode)
+        if RemoteControlledActivity.NETWORK_CLIENT_MODE_ENABLED:
+            opmode |= Esp8266.OP_MODE_CLIENT
+              
+        assert opmode != 0
+        self._esp.setOperatingMode(opmode)
         
-        self._esp.setOperatingMode(2) #Esp8266.OP_MODE_AP
+        #self._esp.setOperatingMode(1) #Esp8266.OP_MODE_CLIENT = 1; Esp8266.OP_MODE_AP = 2
         
-        #if RemoteControlledActivity.NETWORK_CLIENT_MODE_ENABLED:
+        if RemoteControlledActivity.NETWORK_CLIENT_MODE_ENABLED:
          
-            #self._esp.join(RemoteControlledActivity.NETWORK_CLIENT_MODE_SSID, RemoteControlledActivity.NETWORK_CLIENT_MODE_PASSWD)
+            self._esp.join(RemoteControlledActivity.NETWORK_CLIENT_MODE_SSID, RemoteControlledActivity.NETWORK_CLIENT_MODE_PASSWD)
             #TODO: 20200511 DPM Get IP configuration from settings
-        #self._esp.setStaIpAddress("192.168.1.200", "192.168.1.1")
+            self._esp.setStaIpAddress(RemoteControlledActivity.NETWORK_CLIENT_IP, RemoteControlledActivity.NETWORK_CLIENT_GATEWAY)
             
-#         if RemoteControlledActivity.NETWORK_AP_ENABLED:
-#              
-#             if RemoteControlledActivity.NETWORK_AP_PASSWD != None and RemoteControlledActivity.NETWORK_AP_PASSWD != "":
-#                 self._esp.setAccessPointConfig(RemoteControlledActivity.NETWORK_AP_SSID, RemoteControlledActivity.NETWORK_AP_PASSWD, security=Esp8266.SECURITY_WPA_WPA2)
-#             else:
-        self._esp.setAccessPointConfig(RemoteControlledActivity.NETWORK_AP_SSID)
-        self._esp.setApIpAddress("192.168.4.1", "192.168.4.1")
+        if RemoteControlledActivity.NETWORK_AP_ENABLED:
+              
+            if RemoteControlledActivity.NETWORK_AP_PASSWD != None and RemoteControlledActivity.NETWORK_AP_PASSWD != "":
+                self._esp.setAccessPointConfig(RemoteControlledActivity.NETWORK_AP_SSID, RemoteControlledActivity.NETWORK_AP_PASSWD, security=Esp8266.SECURITY_WPA_WPA2)
+            else:
+                self._esp.setAccessPointConfig(RemoteControlledActivity.NETWORK_AP_SSID)
+            #TODO 20200725 DPM Get IP Address on AP-mode from settings
+            self._esp.setApIpAddress(RemoteControlledActivity.NETWORK_AP_IP, RemoteControlledActivity.NETWORK_AP_IP)
          
         self._isrunning = False
         
         self._ledMatrix = None
+        self._buzzer = None
         
             
     async def start(self):
@@ -219,6 +230,7 @@ class RemoteControlledActivity(object):
         '''
         
         self._ledMatrix = deviceProvider.getLedMatrix()
+        self._buzzer = deviceProvider.getBuzzer()
         
         
     def getIconRows(self):
@@ -226,7 +238,7 @@ class RemoteControlledActivity(object):
         @return: The icon of this activity
         '''
         
-        return ([            
+        return (None, [            
             0b00000000,
             0b00111100,
             0b01000010,
@@ -235,7 +247,7 @@ class RemoteControlledActivity(object):
             0b00000000,
             0b00011000,
             0b00000000
-            ], None)
+            ])
     
     
     def cleanup(self):
@@ -301,6 +313,17 @@ class RemoteControlledActivity(object):
             
             self._ledMatrix.displayOff()
             self._ledMatrix.clear()
+            
+            
+    def _dispatchBuzzCmd(self, cmd):
+        
+        params = cmd.split(":")
+        if len(params) == 3:
+            
+            freq = int(params[1])
+            playtime = int(params[2])
+            
+            self._buzzer.buzz(freq, playtime)
     
     
     def dispatchCommand(self, message):
@@ -328,6 +351,8 @@ class RemoteControlledActivity(object):
                 self._dispatchExpression(cmd)
             elif cmd.startswith("LMX"):
                 self._dispatchLedMatrixCmd(cmd)
+            elif cmd.startswith("BUZ"):
+                self._dispatchBuzzCmd(cmd)
             else:
                 self._motion.stop()
                 self._ledMatrix.displayOff()
