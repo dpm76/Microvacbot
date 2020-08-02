@@ -119,6 +119,9 @@ class Sequencer(object):
     MODE_NORMAL = const(0)
     MODE_OCTAVE = const(1)
     
+    FREQ_BASE = const(440)
+    DEFAULT_DURATION = const(500) # white
+    
     
     def __init__(self, buzzer):
         '''
@@ -128,7 +131,7 @@ class Sequencer(object):
         '''
         
         self._buzzer = buzzer
-        self._duration = 500
+        self._duration = Sequencer.DEFAULT_DURATION
         self._octave = 4
         self._shift = 0
         self._mode = Sequencer.MODE_NORMAL
@@ -136,7 +139,7 @@ class Sequencer(object):
         
     def _playNote(self, octaveBase, note):
         
-        freq = 440.0 * (2.0 ** ((octaveBase * 12 + note + self._shift)/ 12.0))
+        freq = float(Sequencer.FREQ_BASE) * (2.0 ** ((octaveBase * 12 + note + self._shift)/ 12.0))
         self._buzzer.buzz(freq, self._duration)
         self._shift = 0
         
@@ -161,11 +164,11 @@ class Sequencer(object):
         _:        legato: joins the following note to the former. THIS IS CURRENTLY NOT IMPLEMENTED
         '''
         
-        print("Playing: ", end='')
+        #print("Playing: ", end='')
         
         for item in seq:
             
-            print(item, end='')
+            #print(item, end='')
             
             if self._mode == Sequencer.MODE_NORMAL:
                             

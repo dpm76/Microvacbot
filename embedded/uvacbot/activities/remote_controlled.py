@@ -7,6 +7,7 @@ from micropython import const
 from utime import sleep_ms
 from uvacbot.io.esp8266 import Connection, Esp8266
 from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix, hexStringToInt
+from uvacbot.ui.buzzer import Sequencer
 
 
 class _RemoteConnection(Connection):
@@ -49,7 +50,9 @@ class RemoteControlledActivity(object):
         [ 0,0x8,0xc,0xe,0xc,0x8,0,0 ]
     ]
     
-    EXPRESION_MATRICES = [
+    EXPRESSION_DURATION = const(1000) # milliseconds
+    
+    EXPRESSION_MATRICES = [
         [
             None,
             [ 0,0x66,0x66,0,0x42,0x3c,0,0 ]
@@ -66,6 +69,13 @@ class RemoteControlledActivity(object):
             [ 0xf,0xf,0xf,0xf,0xf0,0xf0,0xf0,0xf0 ],
             [ 0xf0,0xf0,0xf0,0xf0,0xff,0xff,0xff,0xff ]
         ]
+    ]
+    
+    EXPRESSION_SOUNDS = [
+        lambda self: self._buzzer.slide(220, 440, 200),
+        lambda self: self._buzzer.buzz(110, 200),
+        lambda self: self._buzzer.trill(220, 200),
+        lambda self: Sequencer(self._buzzer).play("3cdeg.4b3d")
     ]
     
     def __init__(self, motion, esp):
@@ -157,10 +167,12 @@ class RemoteControlledActivity(object):
         if len(params) == 2:
             
             exprId = int(params[1])
-            if exprId < len(RemoteControlledActivity.EXPRESION_MATRICES):
+            if exprId < len(RemoteControlledActivity.EXPRESSION_MATRICES):
             
-                self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.EXPRESION_MATRICES[exprId][0], RemoteControlledActivity.EXPRESION_MATRICES[exprId][1])
-                sleep_ms(1000)
+                expressionMatrix = RemoteControlledActivity.EXPRESSION_MATRICES[exprId]
+                self._ledMatrix.updateDisplayFromRows(expressionMatrix[0], expressionMatrix[1])
+                RemoteControlledActivity.EXPRESSION_SOUNDS[exprId](self)
+                sleep_ms(RemoteControlledActivity.EXPRESSION_DURATION)
                 self._ledMatrix.displayOff()
         
     
