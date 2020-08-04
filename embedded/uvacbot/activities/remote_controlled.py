@@ -4,7 +4,7 @@ Created on 30 mar. 2020
 @author: David
 '''
 from micropython import const
-from utime import sleep_ms
+from uasyncio import sleep_ms, sleep
 from uvacbot.io.esp8266 import Connection, Esp8266
 from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix, hexStringToInt
 from uvacbot.ui.buzzer import Sequencer
@@ -16,7 +16,7 @@ class _RemoteConnection(Connection):
         
         cmd = message.strip()
         if cmd != "":
-            self._extraObj.dispatchCommand(cmd)
+            await self._extraObj.dispatchCommand(cmd)
                     
 
 class RemoteControlledActivity(object):
@@ -161,26 +161,23 @@ class RemoteControlledActivity(object):
         return self._isrunning
     
     
-    def _dispatchExpression(self, cmd):
+    async def _dispatchExpression(self, params):
         
-        params = cmd.split(':')
-        if len(params) == 2:
+        if len(params) > 0:
             
-            exprId = int(params[1])
+            exprId = int(params[0])
             if exprId < len(RemoteControlledActivity.EXPRESSION_MATRICES):
             
                 expressionMatrix = RemoteControlledActivity.EXPRESSION_MATRICES[exprId]
                 self._ledMatrix.updateDisplayFromRows(expressionMatrix[0], expressionMatrix[1])
                 RemoteControlledActivity.EXPRESSION_SOUNDS[exprId](self)
-                sleep_ms(RemoteControlledActivity.EXPRESSION_DURATION)
+                await sleep_ms(RemoteControlledActivity.EXPRESSION_DURATION)
                 self._ledMatrix.displayOff()
         
     
-    def _dispatchLedMatrixCmd(self, cmd):
+    def _dispatchLedMatrixCmd(self, params):
         
-        params = cmd.split(':')
-        
-        if len(params) > 2:
+        if len(params) > 1:
             
             redRows = []
             greenRows = []
@@ -191,19 +188,19 @@ class RemoteControlledActivity(object):
             for row in range(8):
                 
                 charIndex = row*2
-                red = hexStringToInt(params[1][charIndex:charIndex+2]) if len(params[1]) >= charIndex+2 else red
-                green = hexStringToInt(params[2][charIndex:charIndex+2]) if len(params[2]) >= charIndex+2 else green
+                red = hexStringToInt(params[0][charIndex:charIndex+2]) if len(params[0]) >= charIndex+2 else red
+                green = hexStringToInt(params[1][charIndex:charIndex+2]) if len(params[1]) >= charIndex+2 else green
                 
                 redRows += [red]
                 greenRows += [green]
                 
-            if len(params) > 3:
+            if len(params) > 2:
                 
-                if params[3] == "1":
+                if params[2] == "1":
                     blinkMode = BiColorLedMatrix.BLINK_1HZ
-                elif params[3] == "2":
+                elif params[2] == "2":
                     blinkMode = BiColorLedMatrix.BLINK_2HZ
-                elif params[3] == "H":
+                elif params[2] == "H":
                     blinkMode = BiColorLedMatrix.BLINK_HALF_HZ
                 else:
                     blinkMode = BiColorLedMatrix.BLINK_OFF
@@ -218,45 +215,109 @@ class RemoteControlledActivity(object):
             self._ledMatrix.clear()
             
             
-    def _dispatchBuzzCmd(self, cmd):
+    def _dispatchBuzzCmd(self, params):
         
-        params = cmd.split(":")
-        if len(params) == 3:
+        if len(params) > 1:
             
-            freq = int(params[1])
-            playtime = int(params[2])
+            freq = int(params[0])
+            playtime = int(params[1])
             
             self._buzzer.buzz(freq, playtime)
-    
-    
-    def dispatchCommand(self, message):
-        
-        cmd = message.strip()
-        
-        if cmd != "":
             
-            if cmd == "FWD":
-                self._motion.setThrottle(RemoteControlledActivity.DRIVE_THROTTLE)
-                self._motion.goForwards()
-                self._ledMatrix.updateDisplayFromRows(greenRows=RemoteControlledActivity.STATE_MATRICES[0])
-            elif cmd == "BAK":
-                self._motion.setThrottle(RemoteControlledActivity.SLOW_THROTTLE)
-                self._motion.goBackwards()
-                self._ledMatrix.updateDisplayFromRows(redRows=RemoteControlledActivity.STATE_MATRICES[1]);
-            elif cmd == "TLE":
-                self._motion.turnLeft()
-                #The led-matrix is placed with its base line to the forward direction, therefore left and right are reversed 
-                self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[3],RemoteControlledActivity.STATE_MATRICES[3]);
-            elif cmd == "TRI":
-                self._motion.turnRight()
-                self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[2],RemoteControlledActivity.STATE_MATRICES[2]);
-            elif cmd.startswith("EXP"):
-                self._dispatchExpression(cmd)
-            elif cmd.startswith("LMX"):
-                self._dispatchLedMatrixCmd(cmd)
-            elif cmd.startswith("BUZ"):
-                self._dispatchBuzzCmd(cmd)
+
+    def _stopAndClear(self):
+        
+        self._motion.stop()
+        self._ledMatrix.displayOff()
+        self._ledMatrix.clear()
+        
+
+    async def _sleepAndStop(self, params):
+        
+        if params != None and len(params) != 0:
+                    
+            delay = int(params[0])
+            
+            if len(params) > 1 and params[1].lower() == 's':
+                
+                await sleep(delay)
+            
             else:
-                self._motion.stop()
-                self._ledMatrix.displayOff()
-                self._ledMatrix.clear()
+                
+                await sleep_ms(delay)
+                
+            self._stopAndClear()
+        
+            
+    async def _dispatchForwardsCmd(self, params):
+        
+        self._motion.setThrottle(RemoteControlledActivity.DRIVE_THROTTLE)
+        self._motion.goForwards()
+        self._ledMatrix.updateDisplayFromRows(greenRows=RemoteControlledActivity.STATE_MATRICES[0])
+        await self._sleepAndStop(params)
+        
+        
+    async def _dispatchBackwardsCmd(self, params):
+        
+        self._motion.setThrottle(RemoteControlledActivity.SLOW_THROTTLE)
+        self._motion.goBackwards()
+        self._ledMatrix.updateDisplayFromRows(redRows=RemoteControlledActivity.STATE_MATRICES[1])
+        await self._sleepAndStop(params)
+        
+        
+    async def _dispatchTurnLeftCmd(self, params):
+    
+        self._motion.turnLeft()
+        #The led-matrix is placed with its base line to the forward direction, therefore left and right are reversed 
+        self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[3],RemoteControlledActivity.STATE_MATRICES[3]);
+        await self._sleepAndStop(params)
+    
+    
+    async def _dispatchTurnRightCmd(self, params):
+        
+        self._motion.turnRight()
+        self._ledMatrix.updateDisplayFromRows(RemoteControlledActivity.STATE_MATRICES[2],RemoteControlledActivity.STATE_MATRICES[2])
+        await self._sleepAndStop(params)
+        
+        
+    def _dispatchStopCmd(self, params):
+        
+        self._stopAndClear()        
+                
+    
+    async def dispatchCommand(self, message):
+        
+        message = message.strip()
+        
+        if message != "":
+            
+            cmdArgs = message.split(':')
+            cmdCode = cmdArgs[0].upper()
+            cmdParams = cmdArgs[1:]
+            
+            if cmdCode == "FWD":
+                await self._dispatchForwardsCmd(cmdParams)
+                
+            elif cmdCode == "BAK":
+                await self._dispatchBackwardsCmd(cmdParams)
+                
+            elif cmdCode == "TLE":
+                await self._dispatchTurnLeftCmd(cmdParams)
+                
+            elif cmdCode == "TRI":
+                await self._dispatchTurnRightCmd(cmdParams)
+                
+            elif cmdCode.startswith("STO"):
+                self._dispatchStopCmd(cmdParams)
+                
+            elif cmdCode.startswith("EXP"):
+                await self._dispatchExpression(cmdParams)
+                
+            elif cmdCode.startswith("LMX"):
+                self._dispatchLedMatrixCmd(cmdParams)
+                
+            elif cmdCode.startswith("BUZ"):
+                self._dispatchBuzzCmd(cmdParams)
+                
+            else:
+                self._stopAndClear()
