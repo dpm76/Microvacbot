@@ -1,11 +1,11 @@
 import sys
 sys.path.append("/flash/userapp")
 
-from pyb import Pin
+from pyb import Switch, Pin
 from uvacbot.sensor.ultrasound import Ultrasound
 from uvacbot.ui.buzzer import Buzzer
 
-from time import sleep_ms
+from utime import sleep_ms
 
 if __name__ == '__main__':
 
@@ -22,27 +22,27 @@ if __name__ == '__main__':
     meter = Ultrasound(Pin.board.D2, Pin.board.D4)
     buzzer = Buzzer(Pin.board.D12, 3, 1)
     
-    switch = Pin.board.SW    
-    offValue = switch.value()
-    
+    switch = Switch()
+        
     try:
         
         # Wait for switch button press the first time
         print("Press switch button to start")
-        while switch.value() == offValue:
+        while not switch.value():
             sleep_ms(100)
     
         # Wait for switch button release        
-        while switch.value() != offValue:
+        while switch.value():
             sleep_ms(100)
     
         # Wait for swith button press to finish
         print("Press switch button to finish")
-        while switch.value() == offValue:
+        while not switch.value():
             dist = meter.read()
             if MIN_DIST <= dist <= MAX_DIST:
                 freq = MAX_FREQ - ((dist - MIN_DIST) * SPAN_FREQ / SPAN_DIST)
                 buzzer.buzz(freq, PLAY_TIME)
+                sleep_ms(PLAY_TIME)
             else:
                 sleep_ms(PLAY_TIME)
             
