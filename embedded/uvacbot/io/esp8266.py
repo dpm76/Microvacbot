@@ -52,6 +52,10 @@ class Esp8266(object):
             self._enablePin = None
     
         self._debug = debug
+        
+        # Reset module
+        self.disable()
+        sleep_ms(500)
 
     
     def start(self, txPower=40):

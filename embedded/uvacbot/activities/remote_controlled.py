@@ -101,9 +101,10 @@ class RemoteControlledActivity(object):
         
         if RemoteControlledActivity.NETWORK_CLIENT_MODE_ENABLED:
          
-            self._esp.join(RemoteControlledActivity.NETWORK_CLIENT_MODE_SSID, RemoteControlledActivity.NETWORK_CLIENT_MODE_PASSWD)
             #TODO: 20200511 DPM Get IP configuration from settings
             self._esp.setStaIpAddress(RemoteControlledActivity.NETWORK_CLIENT_IP, RemoteControlledActivity.NETWORK_CLIENT_GATEWAY)
+            #TODO: 20200916 DPM Get SSID and password from settings
+            self._esp.join(RemoteControlledActivity.NETWORK_CLIENT_MODE_SSID, RemoteControlledActivity.NETWORK_CLIENT_MODE_PASSWD)
             
         if RemoteControlledActivity.NETWORK_AP_ENABLED:
               
