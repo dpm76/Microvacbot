@@ -35,19 +35,47 @@ class Buzzer(object):
         self._timer = Timer(timerId, freq=440)
         self._channel = self._timer.channel(channelId, Timer.PWM, pin=self._pin,  pulse_width=0)
         
+        self._buzzing = False
+        
+    
+    def startBuzz(self, freq):
+        '''
+        Starts beeping. Use the stopBuzz method to finish.
+        @see Buzzer.stopBuzz
+        
+        @param freq: Frequency of the sound
+        '''
+        
+        if self._buzzing:
+            self._timer.freq(freq)
+        else:            
+            self._timer.init(freq=freq)
+            self._buzzing = True
+        
+        self._channel.pulse_width_percent(50.0)
+        
+    
+    def stopBuzz(self):
+        '''
+        Stops beeping.
+        @see Buzzer.startBuzz
+        '''
+        
+        self._channel.pulse_width(0)
+        self._buzzing = False
+     
     
     def buzz(self, freq, millisecs):
         '''
-        Beeps a sound
+        Beeps a sound during a time
         
         @param freq: Frequency of the sound
         @param millisecs: Time to play
         '''
         
-        self._timer.init(freq=freq)
-        self._channel.pulse_width_percent(50.0)
+        self.startBuzz(freq)
         sleep_ms(millisecs)
-        self._channel.pulse_width(0)
+        self.stopBuzz()
         
             
     def trill(self, freq, millisecs, playTime=10, muteTime=10):
@@ -63,10 +91,9 @@ class Buzzer(object):
         startTime = ticks_ms()
         
         while millisecs > ticks_diff(ticks_ms(), startTime):
-            self._timer.init(freq=freq)
-            self._channel.pulse_width_percent(50.0)
+            self.startBuzz(freq)
             sleep_ms(playTime)
-            self._channel.pulse_width(0)
+            self.stopBuzz()
             sleep_ms(muteTime)
             
             
@@ -83,8 +110,7 @@ class Buzzer(object):
         freq = freq1
         t = 0
         while t < millisecs:            
-            self._timer.freq(freq)
-            self._channel.pulse_width_percent(50.0)
+            self.startBuzz(freq)
             sleep_ms(1)
             t += 1
             freq += step
@@ -98,6 +124,8 @@ class Buzzer(object):
         Removes resources
         '''
         
+        self._channel.pulse_width(0)
+        self._buzzing = False
         self._timer.deinit()
         
         

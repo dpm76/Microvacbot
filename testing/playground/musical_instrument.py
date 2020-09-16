@@ -1,21 +1,22 @@
 import sys
 sys.path.append("/flash/userapp")
 
+from micropython import const
 from pyb import Switch, Pin
+from utime import sleep_ms
 from uvacbot.sensor.ultrasound import Ultrasound
 from uvacbot.ui.buzzer import Buzzer
 
-from utime import sleep_ms
 
 if __name__ == '__main__':
 
-    PLAY_TIME = 100 # ms
+    CHECK_TIME = const(10) # ms
 
     MIN_DIST = 10.0
     MAX_DIST = 100.0
     SPAN_DIST = MAX_DIST - MIN_DIST
 
-    MIN_FREQ = 220.0
+    MIN_FREQ = 110.0
     MAX_FREQ = 880.0
     SPAN_FREQ = MAX_FREQ - MIN_FREQ
 
@@ -29,11 +30,11 @@ if __name__ == '__main__':
         # Wait for switch button press the first time
         print("Press switch button to start")
         while not switch.value():
-            sleep_ms(100)
+            sleep_ms(CHECK_TIME)
     
         # Wait for switch button release        
         while switch.value():
-            sleep_ms(100)
+            sleep_ms(CHECK_TIME)
     
         # Wait for swith button press to finish
         print("Press switch button to finish")
@@ -41,10 +42,11 @@ if __name__ == '__main__':
             dist = meter.read()
             if MIN_DIST <= dist <= MAX_DIST:
                 freq = MAX_FREQ - ((dist - MIN_DIST) * SPAN_FREQ / SPAN_DIST)
-                buzzer.buzz(freq, PLAY_TIME)
-                sleep_ms(PLAY_TIME)
+                buzzer.startBuzz(freq)                
             else:
-                sleep_ms(PLAY_TIME)
+                buzzer.stopBuzz()
+                
+            sleep_ms(CHECK_TIME)
             
     finally:
         meter.cleanup()
