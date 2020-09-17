@@ -99,17 +99,21 @@ class Robot(object):
         self._loop.create_task(self._heartbeat.run())        
         
     
-    def _preselectActivity(self, _):
+    def _rotateActivity(self, _):
         '''
-        Preselects an activity and shows its icon
+        Rotates to the next available activity and shows its icon
         '''
         
-        self.getBuzzer().buzz(220, E)
-        
+        self.getBuzzer().buzz(220, E)        
         self._activityIndex = (self._activityIndex + 1) % len(self._activities)
+        self._preselectActivity()
         
-        iconRows = self._activities[self._activityIndex].getIconRows()
-        self.getLedMatrix().updateDisplayFromRows(iconRows[0], iconRows[1])
+    
+    def _preselectActivity(self):
+    
+        if self._activityIndex < len(self._activities):    
+            iconRows = self._activities[self._activityIndex].getIconRows()
+            self.getLedMatrix().updateDisplayFromRows(iconRows[0], iconRows[1])
         
     
     def run(self):
@@ -117,10 +121,11 @@ class Robot(object):
         Runs the execution of the activity 
         '''
         
+        self._preselectActivity()
         #TODO: 20200515 DPM Get the Button's pin from settings. 
         #PC13 is the Switch (a.k.a. user button) for the NUCLEO_F767ZI and NUCLEO_L476RG boards.
-        #Please, check for other boards. 
-        Button(Pin.cpu.C13, lowOnPress=True).setLongPressHandler(self._selectActivity).setShortPressHandler(self._preselectActivity)       
+        #Please, check for other boards.
+        Button(Pin.cpu.C13, lowOnPress=True).setLongPressHandler(self._selectActivity).setShortPressHandler(self._rotateActivity)       
         
         self._running = True
         self._loop.run_until_complete(self._keepRunning())
