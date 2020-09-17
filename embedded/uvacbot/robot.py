@@ -27,6 +27,7 @@ class Robot(object):
         self._buzzer = None
         self._sequencer = None
         
+        #TODO: 20200917 DPM Get heartbeat led from settings
         self._heartbeatLed = LED(1)
         self._heartbeat = Heartbeat(self._heartbeatLed)
         self._testUserInterface()

@@ -122,12 +122,18 @@ class RemoteControlledActivity(object):
         
             
     async def start(self):
+        '''
+        Starts the activity
+        '''
         
         self._isrunning = True
         self._esp.initServer(_RemoteConnection, self)
     
     
     async def stop(self):
+        '''
+        Stops the activity
+        '''
         
         self._esp.stopServer()
         self._isrunning = False
@@ -153,11 +159,18 @@ class RemoteControlledActivity(object):
     
     
     def cleanup(self):
+        '''
+        Finalizes and releases the used resources
+        '''
         
         self._motion.stop()
         
     
     def isRunning(self):
+        '''
+        Reports the activity is currently running
+        @return: True or False depending the activity is running or not
+        '''
         
         return self._isrunning
     

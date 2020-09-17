@@ -74,6 +74,7 @@ class RandomMotionActivity(object):
         self._ledMatrix = None
         self._buzzer = None
         
+        #TODO: 20200917 DPM Try to move the task creation to the start-method
         loop = get_event_loop()
         loop.create_task(self.run())
     
