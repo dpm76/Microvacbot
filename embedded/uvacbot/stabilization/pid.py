@@ -6,6 +6,7 @@ Created on 26 ago. 2019
 from pyb import Timer
 from uasyncio import sleep_ms, get_event_loop
 from utime import ticks_us, ticks_diff
+from uvacbot.modular_math import modularDiff
 
 
 class Pid(object):
@@ -122,25 +123,6 @@ class Pid(object):
 
         return self._kd
     
-    
-    @staticmethod
-    def _scalarError(target, currentValue):
-        
-        return target - currentValue
-    
-    
-    @staticmethod
-    def _modularError(target, currentValue, modulus):
-        
-        err1 = (target-currentValue)%modulus
-        err2 = (currentValue-target)%modulus
-        if err1 < err2:
-            err = -err1
-        else:
-            err = err2
-            
-        return err
-    
         
     def _calculate(self):
         '''
@@ -154,9 +136,9 @@ class Pid(object):
         for i in range(self._length):
             
             if self._modulus[i] != 0.0:
-                error = Pid._modularError(self._targets[i], currentValues[i], self._modulus[i])
+                error = modularDiff(self._targets[i], currentValues[i], self._modulus[i])
             else:
-                error = Pid._scalarError(self._targets[i], currentValues[i])
+                error = self._targets[i] - currentValues[i]
                         
             #Proportional stabilization
             pPart = self._kp[i] * error

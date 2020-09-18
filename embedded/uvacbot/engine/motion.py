@@ -5,7 +5,6 @@ Created on 11 mar. 2020
 '''
 
 from math import pi
-
 from uvacbot.engine.driver import Driver
 from uvacbot.stabilization.pid import PidCoroutine
 
@@ -106,8 +105,8 @@ class MotionController(object):
         self._pid.stop()
         self._driver.setMode(Driver.MODE_ROTATE)
         self._driver.setMotionVector(0, self._rotation)
-    
-    
+
+   
     def stop(self):
         '''
         Stops the robot

@@ -37,11 +37,14 @@ def main():
     motorRight = Motor(Pin.board.D9, 8, 2, Pin.board.D8)
     motorDriver = Driver(motorLeft, motorRight)
     
+    #TODO: 20200918 DPM Move the MPU initialization to the robot-class
     mpu=Mpu6050(1)
     mpu.start()
     
+    #TODO: 20200918 DPM Move the motion-controller initialization to the robot-class
     motion = MotionController(mpu, motorDriver, PID_KP, PID_KI, PID_KD)
     
+    #TODO: 20200918 DPM Move the wifi-module initialization to the robot-class
     esp = Esp8266(3, Pin.board.D3, 115200, debug=False)
     robot = Robot()
     
@@ -58,6 +61,7 @@ def main():
     finally:
         
         robot.cleanup()
+        #TODO: 20200918 DPM move devices' cleanup into robot's 
         esp.cleanup()
         mpu.cleanup()
         motorDriver.cleanup()
