@@ -4,8 +4,12 @@ Created on 11 mar. 2020
 @author: David
 '''
 
-from math import pi
+from math import pi, radians
+
+from micropython import const
+from uasyncio import sleep_ms
 from uvacbot.engine.driver import Driver
+from uvacbot.modular_math import modularDiff
 from uvacbot.stabilization.pid import PidCoroutine
 
 
@@ -18,6 +22,9 @@ class MotionController(object):
     
     DEFAULT_THROTTLE = 50.0
     DEFAULT_ROTATION = 50.0
+    
+    DEFAULT_TURN_ACCURACY = radians(5)
+    DEFAULT_TURN_CHECK_PERIOD = const(20) # ms
     
 
     def __init__(self, mpu, driver, pidkp, pidki, pidkd):
@@ -105,6 +112,29 @@ class MotionController(object):
         self._pid.stop()
         self._driver.setMode(Driver.MODE_ROTATE)
         self._driver.setMotionVector(0, self._rotation)
+
+
+    def turnTo(self, rads):
+        '''
+        Turns to a concrete angle
+        @param rads: Target angle as radians
+        '''
+                
+        pi2 = 2*pi
+        
+        curAngle = self._readMpu()[0]
+        diff = modularDiff(rads, curAngle, pi2)
+        if  diff > 0:
+            self.turnRight()
+        elif diff <= 0:
+            self.turnLeft()
+        
+        while abs(diff) > MotionController.DEFAULT_TURN_ACCURACY:
+            curAngle = self._readMpu()[0]
+            diff = modularDiff(rads, curAngle, pi2)
+            sleep_ms(MotionController.DEFAULT_TURN_CHECK_PERIOD)
+        
+        self.stop()
 
    
     def stop(self):

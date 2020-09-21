@@ -41,14 +41,13 @@ def turn(motion, mpu, rads):
             motion.turnLeft()
         
         while abs(diff) > maxdiff:
-         
-            print("{0:.3f}".format(degrees(curAngle)), end='\t')
+            print("{0:.3f}, {1:.3f}".format(degrees(curAngle), degrees(diff)), end='\t')
             curAngle = _readMpu(mpu)
-            diff = modularDiff(rads, curAngle, pi2)
+            diff = abs(modularDiff(rads, curAngle, pi2))
             sleep_ms(20)
 
         
-        print("{0:.3f}".format(degrees(curAngle)), end='\t')
+        print("{0:.3f}, {1:.3f}".format(degrees(curAngle), degrees(diff)), end='\t')
         print("OK")
         motion.stop()
         
@@ -78,7 +77,7 @@ def main():
     
     
     try:
-        turn(motion, mpu, radians(90))
+        turn(motion, mpu, radians(-45))
     finally:
         mpu.cleanup()
         motorDriver.cleanup()
