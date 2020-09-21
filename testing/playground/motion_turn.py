@@ -9,7 +9,6 @@ sys.path.append("/flash/userapp")
 
 from math import radians, pi, degrees
 
-from micropython import const
 from pyb import Pin
 from utime import sleep_ms
 from uvacbot.engine.driver import Driver
@@ -26,40 +25,37 @@ def _readMpu(mpu):
 
 def turn(motion, mpu, rads):
         
-        STATE_STOP = const(0)
-        STATE_RIGHT = const(1)
-        STATE_LEFT = const(2)
-        
         maxdiff = radians(5)
-        pipi = 2*pi
+        pi2 = 2*pi
         
-        state = STATE_STOP
+        curAngle = _readMpu(mpu)
+        diff = modularDiff(rads, curAngle, pi2)
+        if  diff > 0:
+                
+            print("R")
+            motion.turnRight()
+            
+        elif diff <= 0:
+                            
+            print("L")
+            motion.turnLeft()
         
-        current = _readMpu(mpu)
-        diff = modularDiff(rads, current, pipi)
         while abs(diff) > maxdiff:
          
-            print("{0:.3f}".format(degrees(current)), end='\t')
-            if  diff > 0 and state != STATE_RIGHT:
-                
-                print("R")
-                motion.turnRight()
-                state = STATE_RIGHT
-                
-            elif diff <= 0 and state != STATE_LEFT:
-                                
-                print("L")
-                motion.turnLeft()
-                state = STATE_LEFT
-                
-            current = _readMpu(mpu)
-            diff = modularDiff(rads, current, pipi)
-            sleep_ms(100)
+            print("{0:.3f}".format(degrees(curAngle)), end='\t')
+            curAngle = _readMpu(mpu)
+            diff = modularDiff(rads, curAngle, pi2)
+            sleep_ms(20)
+
         
-        print("{0:.3f}".format(degrees(current)), end='\t')
+        print("{0:.3f}".format(degrees(curAngle)), end='\t')
         print("OK")
         motion.stop()
-        state = STATE_STOP
+        
+        #Check angle after stop
+        sleep_ms(1000)
+        curAngle = _readMpu(mpu)
+        print("Stoped at {0:.3f} with target {1}".format(degrees(curAngle), degrees(rads)))
         
         
 def main():
@@ -68,18 +64,21 @@ def main():
     PID_KI = 0.0
     PID_KD = 0.0
     
+    print("initializing MPU")
     mpu=Mpu6050(1)
     mpu.start()
+    print("MPU initialized")
     
     motorLeft = Motor(Pin.board.D10, 4, 1, Pin.board.D11)
     motorRight = Motor(Pin.board.D9, 8, 2, Pin.board.D8)
     motorDriver = Driver(motorLeft, motorRight)
     
     motion = MotionController(mpu, motorDriver, PID_KP, PID_KI, PID_KD)
+    motion.setRotation(60)
     
     
     try:
-        turn(motion, mpu, radians(-45))
+        turn(motion, mpu, radians(90))
     finally:
         mpu.cleanup()
         motorDriver.cleanup()
