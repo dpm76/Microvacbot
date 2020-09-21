@@ -114,13 +114,14 @@ class MotionController(object):
         self._driver.setMotionVector(0, self._rotation)
 
 
-    def turnTo(self, rads):
+    async def turnTo(self, rads):
         '''
         Turns to a concrete angle
         @param rads: Target angle as radians
         '''
-                
+                        
         pi2 = 2*pi
+        rads = rads % pi2
         
         curAngle = self._readMpu()[0]
         diff = modularDiff(rads, curAngle, pi2)
@@ -132,7 +133,7 @@ class MotionController(object):
         while abs(diff) > MotionController.DEFAULT_TURN_ACCURACY:
             curAngle = self._readMpu()[0]
             diff = modularDiff(rads, curAngle, pi2)
-            sleep_ms(MotionController.DEFAULT_TURN_CHECK_PERIOD)
+            await sleep_ms(MotionController.DEFAULT_TURN_CHECK_PERIOD)
         
         self.stop()
 

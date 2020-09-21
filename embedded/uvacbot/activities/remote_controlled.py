@@ -8,6 +8,7 @@ from uasyncio import sleep_ms, sleep
 from uvacbot.io.esp8266 import Connection, Esp8266
 from uvacbot.ui.bicolor_led_matrix import BiColorLedMatrix, hexStringToInt
 from uvacbot.ui.buzzer import Sequencer
+from math import radians
 
 
 class _RemoteConnection(Connection):
@@ -294,6 +295,21 @@ class RemoteControlledActivity(object):
         await self._sleepAndStop(params)
         
         
+    async def _dispatchTurnToCmd(self, params):
+        
+        if params != None and len(params) >= 2:
+            
+            angle = float(params[0]) if params != "" else 0.0
+            unit = params[1].lower()
+            
+            if unit == "g":
+                angleRad = radians(angle)
+            else:
+                angleRad = angle
+            
+            await self._motion.turnTo(angleRad)
+        
+        
     def _dispatchStopCmd(self, params):
         
         self._stopAndClear()        
@@ -320,6 +336,9 @@ class RemoteControlledActivity(object):
                 
             elif cmdCode == "TRI":
                 await self._dispatchTurnRightCmd(cmdParams)
+                
+            elif cmdCode.startswith("TRT"):
+                await self._dispatchTurnToCmd(cmdParams)
                 
             elif cmdCode.startswith("STO"):
                 self._dispatchStopCmd(cmdParams)
