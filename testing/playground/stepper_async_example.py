@@ -9,7 +9,7 @@ path.append("/flash/userapp")
 
 from micropython import alloc_emergency_exception_buf
 from pyb import Pin
-from uasyncio import run
+from uasyncio import run as uasyncio_run
 from uvacbot.sensor.stepper import Stepper
 from uvacbot.io.irq_event import IrqEvent
 
@@ -17,12 +17,12 @@ alloc_emergency_exception_buf(100)
 
 syncEvent = IrqEvent()
 
-def onTrigger(sender, arg):
+def onTrigger(sender):
     
     global syncEvent
     
     print("triggered")
-    sender.stopCount()
+    sender.stopCounting()
     syncEvent.set()
     
 
@@ -39,8 +39,8 @@ def main():
         
     count = 3
     print("Stepper asynchronous example. Counts {0} steps and exits.".format(count))
-    Stepper(Pin.board.D7, Pin.PULL_UP).setStepTrigger(count).setCallback(onTrigger).startCount()
-    run(mainTask())
+    Stepper(Pin.board.D7, Pin.PULL_UP).setStepTrigger(count).setCallback(onTrigger).startCounting()
+    uasyncio_run(mainTask())
     
 
 if __name__ == '__main__':

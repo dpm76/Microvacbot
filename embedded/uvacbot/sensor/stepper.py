@@ -16,8 +16,8 @@ class Stepper(object):
         '''
         Constructor
         @param pin: Pin where the signal is received
-        @param stepLevel: value on the pin indicating a step (values: 0, 1)
         @param pullMode: (default: None) specifies if the pin has a (weak) pull resistor attached.
+        @param stepLevel: value on the pin indicating a step (values: 0, 1)
         @see http://docs.micropython.org/en/latest/library/machine.Pin.html?highlight=pin#machine.Pin
         '''
         
@@ -37,7 +37,7 @@ class Stepper(object):
         
         @param callback: Callback method with at least one parameter: this object itself
         @param args: (optional) additional object passed to the callback
-        @returns self
+        @return: self
         '''
         
         self._callback = callback
@@ -51,7 +51,7 @@ class Stepper(object):
         Set the step trigger
         
         @param stepTrigger: Positive integer. On this step the callback will be called
-        @returns self
+        @return: self
         '''
         
         self._stepTrigger = stepTrigger
@@ -59,7 +59,7 @@ class Stepper(object):
         return self
     
     
-    def reset(self):
+    def resetCount(self):
         '''
         Set the step counter to zero
         '''
@@ -67,10 +67,10 @@ class Stepper(object):
         self._counter = 0
         
         
-    def startCount(self):
+    def startCounting(self):
         '''
         Starts to count steps
-        @returns self
+        @return: self
         '''
         
         self._state = self._pin.value()
@@ -79,21 +79,33 @@ class Stepper(object):
         return self
         
         
-    def stopCount(self):
+    def stopCounting(self):
         '''
         Stops to count steps
         '''
         
         self._pin.irq(None)
+        
+        
+    def steps(self):
+        '''
+        @return: Number of steps after starting or reset
+        '''
+        
+        return self._counter
     
     
     def _execCallback(self):
         '''
-        Execs the callback
+        Executes the callback
         '''
         
         if self._callback:
-            self._callback(self, self._callbackArgs)
+            
+            if self._callbackArgs:
+                self._callback(self, self._callbackArgs)
+            else:
+                self._callback(self)
         
         
     def _onStep(self, pin):

@@ -13,7 +13,7 @@ from utime import sleep
 def onTrigger(sender, data):
 
     print("ontrigger")
-    sender.stopCount()
+    sender.stopCounting()
     print("trigger: {0}".format(data))
 
 
@@ -21,9 +21,9 @@ def main():
 
     count = 3
     print("Stepper example. It counts {0} steps and exits.".format(count))
-    stepper = Stepper(Pin.board.D7, Pin.PULL_UP).setStepTrigger(count).setCallback(onTrigger, "hello world").startCount()
+    stepper = Stepper(Pin.board.D7, Pin.PULL_UP).setStepTrigger(count).setCallback(onTrigger, "hello world").startCounting()
     sleep(5)
-    stepper.stopCount()
+    stepper.stopCounting()
     print("finished")
 
 if __name__ == '__main__':
