@@ -62,9 +62,12 @@ class Stepper(object):
     def resetCount(self):
         '''
         Set the step counter to zero
+        @return: self
         '''
     
         self._counter = 0
+        
+        return self
         
         
     def startCounting(self):
