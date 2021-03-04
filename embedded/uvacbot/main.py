@@ -45,7 +45,7 @@ def main():
     motion = MotionController(mpu, motorDriver, PID_KP, PID_KI, PID_KD)
     
     #TODO: 20200918 DPM Move the wifi-module initialization to the robot-class
-    esp = Esp8266(3, Pin.board.D3, 115200, debug=False)
+    esp = Esp8266(3, Pin.board.D3, 115200, debug=True)
     robot = Robot()
     
     # Add activities here:
