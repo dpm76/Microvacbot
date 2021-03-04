@@ -182,14 +182,14 @@ class Sequencer(object):
                 once set, it is valid for the following notes until a new duration command
         a-g:    notes in English notation
         A-G:    notes for the upper octave
-        .:      increases the duration of the next note a half of the current duration
+        .:      increases the duration of the next note a half of the current duration (in the current implementation the note duration must be explicitly restored after the symbol) 
         #:      sharp: increases the next note a semitone
         $:      flat: decreases the next note a semitone
-        /:      triplet (in the current implementation the note duration must be explicitly restored)
+        /:      triplet (in the current implementation the note duration must be explicitly restored after the triplet)
         space(' ') : mutes the sound the time of the current duration
         O:      Sets the current octave as the following number (from 1 to 9, where the default is 4)
-        ( and ):    Repeats its contents. THIS IS CURRENTLY NOT IMPLEMENTED
-        _:        legato: joins the following note to the former. THIS IS CURRENTLY NOT IMPLEMENTED
+        ( and ):    TODO: Repeats its contents. THIS IS CURRENTLY NOT IMPLEMENTED
+        _:        TODO: legato: joins the following note to the former. THIS IS CURRENTLY NOT IMPLEMENTED
         '''
         
         #print("Playing: ", end='')
