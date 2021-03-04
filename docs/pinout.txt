@@ -12,7 +12,7 @@ CN6.6 (GND)                 GND Line
 CN6.7 (GND)                 GND Battery
 CN6.8 (VIN)                 5V-12V Battery
 
-CN5.10(I2C1.SCL)            I2C_line.SCL        MPU6050, BILED-MATRIX
+CN5.10(I2C1.SCL)            I2C_line.SCL        MPU6050, BILED-MATRIX (HT16K33)
 CN5.9 (I2C1.SDA)            I2C_line.SDA        idem
 CN5.5 (PWM3/1, GPIO.D12)    Buzzer              
 CN5.4 (GPIO.D11)            DRV8835.B.PHASE     reverse pin, left motor
