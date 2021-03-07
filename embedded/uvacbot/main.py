@@ -18,6 +18,7 @@ from uvacbot.engine.driver import Driver
 from uvacbot.engine.motion import MotionController
 from uvacbot.engine.motor import Motor
 from uvacbot.sensor.ultrasound import Ultrasound
+from uvacbot.sensor.stepper import Stepper
 
 PID_KP = 250.0
 PID_KI = 0.0
@@ -42,7 +43,7 @@ def main():
     mpu.start()
     
     #TODO: 20200918 DPM Move the motion-controller initialization to the robot-class
-    motion = MotionController(mpu, motorDriver, PID_KP, PID_KI, PID_KD)
+    motion = MotionController(mpu, motorDriver, PID_KP, PID_KI, PID_KD).setStepper(Stepper(Pin.board.D7, Pin.PULL_UP))
     
     #TODO: 20200918 DPM Move the wifi-module initialization to the robot-class
     esp = Esp8266(3, Pin.board.D3, 115200, debug=True)

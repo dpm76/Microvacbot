@@ -308,6 +308,22 @@ class RemoteControlledActivity(object):
                 angleRad = angle
             
             await self._motion.turnTo(angleRad)
+            
+            
+    async def _dispatchForwardsToCmd(self, params):
+        
+        if params != None and len(params) >= 1:
+            
+            #TODO: 20210305 DPM Only steps are currently implemented
+            await self._motion.goForwardsTo(int(params[0]))
+    
+    
+    async def _dispatchBackwardsToCmd(self, params):
+        
+        if params != None and len(params) >= 1:
+            
+            #TODO: 20210305 DPM Only steps are currently implemented
+            await self._motion.goBackwardsTo(int(params[0]))
         
         
     def _dispatchStopCmd(self, params):
@@ -339,6 +355,12 @@ class RemoteControlledActivity(object):
                 
             elif cmdCode.startswith("TRT"):
                 await self._dispatchTurnToCmd(cmdParams)
+                
+            elif cmdCode == "FWT":
+                await self._dispatchForwardsToCmd(cmdParams)
+            
+            elif cmdCode == "BKT":
+                await self._dispatchBackwardsToCmd(cmdParams)
                 
             elif cmdCode.startswith("STO"):
                 self._dispatchStopCmd(cmdParams)

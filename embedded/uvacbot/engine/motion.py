@@ -11,11 +11,13 @@ from uasyncio import sleep_ms
 from uvacbot.engine.driver import Driver
 from uvacbot.modular_math import modularDiff
 from uvacbot.stabilization.pid import PidCoroutine
+from uvacbot.io.irq_event import IrqEvent
 
 
 class MotionController(object):
     '''
     Defines the basic actions for moving the robot
+    Requires Micropython 1.13 or newer
     '''
     
     PID_FREQ = 50
@@ -39,7 +41,7 @@ class MotionController(object):
         '''
         self._mpu = mpu
         self._driver = driver
-        self._pid = PidCoroutine(1, self._readMpu, self._setPidOutput, "MC")
+        self._pid = PidCoroutine(1, self._readMpu, self._setPidOutput, "MotionController")
         self._pid.setModulus([2*pi])
         self._pid.setProportionalConstants([pidkp])
         self._pid.setIntegralConstants([pidki])
@@ -52,7 +54,10 @@ class MotionController(object):
         self._rotation = MotionController.DEFAULT_ROTATION
         
         self._backwards = False
-                
+        
+        self._stepper = None
+        self._stepReachedEvent = IrqEvent()
+        
     
     def setThrottle(self, throttle):
         '''
@@ -130,6 +135,7 @@ class MotionController(object):
         elif diff <= 0:
             self.turnLeft()
         
+        #TODO: 20210217 DPM: Cancel while-loop on stop from another task
         while abs(diff) > MotionController.DEFAULT_TURN_ACCURACY:
             curAngle = self._readMpu()[0]
             diff = modularDiff(rads, curAngle, pi2)
@@ -146,6 +152,64 @@ class MotionController(object):
         self._pid.stop()
         self._driver.stop()
 
+
+    def _onStepReached(self, sender):
+    
+        sender.stopCounting()
+        self._stepReachedEvent.set()
+        
+
+    def setStepper(self, stepper):
+        '''
+        Set the stepper sensor
+        
+        @return: self
+        '''
+        
+        self._stepper = stepper.setCallback(self._onStepReached)
+        
+        return self
+        
+
+    async def goForwardsTo(self, steps):
+        '''
+        Moves some steps forwards
+        
+        @param steps: The number of steps
+        '''
+        
+        await self._goTo(steps, True)
+        
+        
+    async def goBackwardsTo(self, steps):
+        '''
+        Moves some steps backwards
+        
+        @param steps: The number of steps
+        '''
+    
+        await self._goTo(steps, False)
+
+
+    async def _goTo(self, steps, forwards):
+        '''
+        Moves some steps
+        #TODO: 20210218 DPM: Make it cancelable when the stop-method is called
+        
+        @param steps: The number of steps
+        @param forwards: If True then it moves forwards, else backwards
+        '''
+    
+        if self._stepper:
+            self._stepReachedEvent.clear()
+            self._stepper.resetCount().setStepTrigger(steps).startCounting()
+            if forwards:
+                self.goForwards()
+            else:
+                self.goBackwards()
+            await self._stepReachedEvent.wait()
+            self.stop()
+            
     
     def _readMpu(self):
         
