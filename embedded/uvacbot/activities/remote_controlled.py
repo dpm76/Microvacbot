@@ -302,9 +302,9 @@ class RemoteControlledActivity(object):
             angle = float(params[0]) if params != "" else 0.0
             unit = params[1].lower()
             
-            if unit == "g":
+            if unit == "d": #the angle comes as degrees
                 angleRad = radians(angle)
-            else:
+            else: #the angle comes as radians
                 angleRad = angle
             
             await self._motion.turnTo(angleRad)
