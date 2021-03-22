@@ -143,6 +143,15 @@ class MotionController(object):
         
         self.stop()
 
+    
+    async def turn(self, rads):
+        '''
+        Turns to a relative angle based on the current orientation
+        @param rads: Angle as radians
+        '''
+        
+        await self.turnTo((self._readMpu()[0] + rads) % (2*pi))
+        
    
     def stop(self):
         '''
@@ -178,7 +187,7 @@ class MotionController(object):
         @param steps: The number of steps
         '''
         
-        await self._goTo(steps, True)
+        await self._goTo(steps)
         
         
     async def goBackwardsTo(self, steps):
@@ -188,27 +197,27 @@ class MotionController(object):
         @param steps: The number of steps
         '''
     
-        await self._goTo(steps, False)
+        await self._goTo(-steps)
 
 
-    async def _goTo(self, steps, forwards):
+    async def _goTo(self, steps):
         '''
         Moves some steps
         #TODO: 20210218 DPM: Make it cancelable when the stop-method is called
         
         @param steps: The number of steps
-        @param forwards: If True then it moves forwards, else backwards
         '''
     
-        if self._stepper:
+        if self._stepper and steps != 0:
             self._stepReachedEvent.clear()
-            self._stepper.resetCount().setStepTrigger(steps).startCounting()
-            if forwards:
+            self._stepper.resetCount().setStepTrigger(abs(steps)).startCounting()
+            if steps > 0:
                 self.goForwards()
             else:
                 self.goBackwards()
             await self._stepReachedEvent.wait()
-            self.stop()
+            
+        self.stop()
             
     
     def _readMpu(self):

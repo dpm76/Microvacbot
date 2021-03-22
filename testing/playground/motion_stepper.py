@@ -40,7 +40,7 @@ def main():
     print("Motor with stepper sensor example. Moves {0} steps forwards, then {0} steps backwards and stops.".format(count))
     
     #20210218 DPM: The code of this example is configured for the NUCLEO-L746RG board.
-    #              Please, adapt acording to the actual configuration.
+    #              Please, adapt according to the actual configuration.
     
     PID_KP = 250.0
     PID_KI = 0.0
