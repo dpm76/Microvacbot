@@ -7,19 +7,30 @@ Created on 9 feb. 2021
 from sys import path
 path.append("/flash/userapp")
 
-from uvacbot.sensor.mpu6050 import Mpu6050
 from micropython import alloc_emergency_exception_buf
-from pyb import Pin
-from uasyncio import run as uasyncio_run
+alloc_emergency_exception_buf(100)
+
+from uvacbot.sensor.mpu6050 import Mpu6050
+
+from pyb import Pin, Switch
+from uasyncio import run as uasyncio_run, sleep_ms
 from uvacbot.sensor.stepper import Stepper
 from uvacbot.engine.driver import Driver
 from uvacbot.engine.motion import MotionController
 from uvacbot.engine.motor import Motor
 
-alloc_emergency_exception_buf(100)
-
 async def mainTask(mc, count):
+
+    print("Press user switch to start.")
+    userSwitch = Switch()
+    while not userSwitch.value():
+        await sleep_ms(200)
+    
+    print("Starting")
+    await sleep_ms(1000)
+
     await mc.goForwardsTo(count)
+    await sleep_ms(1000)
     await mc.goBackwardsTo(count)
     
 
