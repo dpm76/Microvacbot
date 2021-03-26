@@ -1,0 +1,6 @@
+Board (without ultrasound nor bi-color led-matrix nor piezo): 150mA, max 180 mA + ultrasound (15mA according its manual): from 165mA up to 195 mA 
+    Vin current limit for 64-pin boards:
+        - case of 7V < Vin <= 9V: 450mA
+        - case of 9V < Vin <= 12V: 250mA
+
+Motors @5,12V: 360mA, max 500mA
