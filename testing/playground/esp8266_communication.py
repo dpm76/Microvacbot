@@ -92,28 +92,18 @@ def main():
     print("Press switch button to finish.")
     
     esp = Esp8266(3, Pin.board.D3, 115200, debug=True) #NUCLEO-L476RG
-    #esp = Esp8266(6, Pin.board.D2, 115200) #NUCLEO-F767ZI
+    #esp = Esp8266(6, Pin.board.D2, 115200, debug=True) #NUCLEO-F767ZI
     
     loop = get_event_loop()
     
     esp.start()
     assert esp.isPresent()
     try:
-        #TODO: Check modules's working mode and set it up if needed (use esp.getOperatingMode())
-        #TODO: Check whether the module is connected to any access-point and join if needed
-        #TODO: Check the IP configuration of the module and set it up if needed
-        
-        #print(esp.getVersion())
-        #esp.reset()
-        #assert esp.isPresent()
-        #print("OP-Mode: {0}".format(esp.getOperatingMode()))
-        #esp.setOperatingMode(Esp8266.OP_MODE_AP | Esp8266.OP_MODE_CLIENT)
-        #assert esp.getOperatingMode() == (Esp8266.OP_MODE_AP | Esp8266.OP_MODE_CLIENT)
-        #esp.setOperatingMode(Esp8266.OP_MODE_AP)
-        #assert esp.getOperatingMode() == (Esp8266.OP_MODE_AP)
-        #esp.setAccessPointConfig("TestAP", "", 1, Esp8266.SECURITY_OPEN)
-        
-        esp.setStaIpAddress("192.168.1.200", "192.168.1.1")
+        #esp.setOperatingMode(Esp8266.OP_MODE_CLIENT)
+        #esp.join("SSID", "PASSWD")
+        #esp.setStaIpAddress("192.168.1.200", "192.168.1.1")
+        esp.setOperatingMode(Esp8266.OP_MODE_AP)
+        esp.setAccessPointConfig("TestAP", "", 1, Esp8266.SECURITY_OPEN)
         loop.run_until_complete(serve(esp))
         
     finally:
