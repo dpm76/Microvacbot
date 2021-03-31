@@ -76,6 +76,7 @@ class RemoteExecConnection(Connection):
 async def serve(esp):
     
     esp.initServer(EchoConnection)
+    #esp.initServer(LedToggleConnection)
     print("Waiting for connections...")
     
     sw = Switch()        
@@ -91,8 +92,10 @@ def main():
     print("*** Esp8266 communication test ***")
     print("Press switch button to finish.")
     
-    esp = Esp8266(3, Pin.board.D3, 115200, debug=True) #NUCLEO-L476RG
-    #esp = Esp8266(6, Pin.board.D2, 115200, debug=True) #NUCLEO-F767ZI
+    esp = None # Uncomment ESP8266 configuration properly
+    #esp = Esp8266(3, Pin.board.D3, 115200, debug=True) #NUCLEO-L476RG
+    # On NUCLEO-F767ZI TX6 is on CN7-01 (PC6) and RX6 is on CN7-11 (PC7)
+    #esp = Esp8266(6, Pin.board.D8, 115200, debug=True) #NUCLEO-F767ZI
     
     loop = get_event_loop()
     

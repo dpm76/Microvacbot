@@ -7,7 +7,7 @@ from machine import UART
 from micropython import const
 from pyb import Pin
 from uasyncio import get_event_loop
-from utime import sleep_ms
+from utime import sleep_ms, ticks_diff, ticks_ms
 
 
 class Esp8266(object):
@@ -32,7 +32,7 @@ class Esp8266(object):
     SECURITY_WPA2 = const(3)
     SECURITY_WPA_WPA2 = const(4)
 
-    def __init__(self, uartId, enablePin=None, baud=115200, debug=False):
+    def __init__(self, uartId, enablePin=None, readTimeout=1000, baud=115200, debug=False):
         '''
         Constructor
         
@@ -40,8 +40,9 @@ class Esp8266(object):
         @param enablePin: (default=None) Pin to handle the enable signal of the ESP8266 module.
             If not provided here, this line should be provided using a different
             way to the module in order to activate it.
+        @param readTimeout: Time to wait for any incoming data in milliseconds (default 1000)
         @param baud: (default=115200) bit-rate of the communication
-        @param debug: (default=False) prints debug information on the repl
+        @param debug: (default=False) prints debug information on the REPL
         '''
         
         self._uart = UART(uartId, baud)
@@ -50,6 +51,8 @@ class Esp8266(object):
             self._enablePin = Pin(enablePin, Pin.OUT)
         else:
             self._enablePin = None
+            
+        self._readTimeout = readTimeout
     
         self._debug = debug
         
@@ -58,7 +61,7 @@ class Esp8266(object):
         sleep_ms(500)
 
     
-    def start(self, txPower=40):
+    def start(self, txPower=10):
         '''
         Starts the module.
         Enable the module and set the TX-power.
@@ -82,7 +85,7 @@ class Esp8266(object):
         
         if self._enablePin != None:
             self._enablePin.on()
-            sleep_ms(500)
+            sleep_ms(300)
             self._flushRx()
 
     
@@ -106,7 +109,7 @@ class Esp8266(object):
         return self._isOk()
     
     
-    def reset(self, txPower=40):
+    def reset(self, txPower=10):
         '''
         Resets the module
         
@@ -273,7 +276,7 @@ class Esp8266(object):
         
         self._write("AT+CIFSR")
         data = self._readline()
-        #TODO: Seems not reading the contents
+        #TODO: It seems not reading the contents
         while data != None and data.startswith(bytes("+CIFSR", Esp8266.BYTES_ENCODING)):
             addressInfo = data.strip().split(bytes(":", Esp8266.BYTES_ENCODING))[1].split(bytes(",", Esp8266.BYTES_ENCODING))
             addresses[addressInfo[0]] = addressInfo[1]
@@ -443,10 +446,19 @@ class Esp8266(object):
         
     def _readline(self):
         
-        data = self._uart.readline()
+        startTicks = ticks_ms()
+        while self._uart.any() == 0 and ticks_diff(ticks_ms(), startTicks) < self._readTimeout:
+            sleep_ms(50)
+            
+        data = None
+        if self._uart.any() != 0:
+            data = self._uart.readline()
         
         if self._debug:
-            print("<= {0}".format(data))
+            if data:
+                print("<= {0}".format(data))
+            else:
+                print("UART timeout")
             
         return data
         
@@ -456,9 +468,11 @@ class Esp8266(object):
         Flushes the RX-buffer
         '''
         
-        while self._readline() != None:
-            pass
-        
+        if self._uart.any():
+            buff = self._uart.read()
+            if self._debug:
+                print("(flushed)<= {0}".format(buff))
+            
     
     def _startsLineWith(self, text, flush=True):
         '''
