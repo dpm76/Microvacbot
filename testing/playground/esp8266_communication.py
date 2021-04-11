@@ -97,6 +97,9 @@ def main():
     # On NUCLEO-F767ZI TX6 is on CN7-01 (PC6) and RX6 is on CN7-11 (PC7)
     #esp = Esp8266(6, Pin.board.D8, 115200, debug=True) #NUCLEO-F767ZI
     
+    if not esp:
+        raise Exception("Create a Esp8266 object first.") 
+    
     loop = get_event_loop()
     
     esp.start()
@@ -106,7 +109,7 @@ def main():
         #esp.join("SSID", "PASSWD")
         #esp.setStaIpAddress("192.168.1.200", "192.168.1.1")
         esp.setOperatingMode(Esp8266.OP_MODE_AP)
-        esp.setAccessPointConfig("TestAP", "", 1, Esp8266.SECURITY_OPEN)
+        esp.setAccessPointConfig("ESP8266-AP", "", 1, Esp8266.SECURITY_OPEN)
         loop.run_until_complete(serve(esp))
         
     finally:

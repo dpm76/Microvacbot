@@ -85,8 +85,10 @@ class Esp8266(object):
         
         if self._enablePin != None:
             self._enablePin.on()
-            sleep_ms(300)
-            self._flushRx()
+            sleep_ms(500)
+            if self._uart.any():
+                self._flushRx()
+                sleep_ms(500)
 
     
     def disable(self):
@@ -441,7 +443,7 @@ class Esp8266(object):
             print("=> {0}".format(bytes(data, Esp8266.BYTES_ENCODING)))
         
         self._uart.write("{0}\r\n".format(data))
-        sleep_ms(100)
+        sleep_ms(200)
         
         
     def _readline(self):
@@ -490,7 +492,7 @@ class Esp8266(object):
             startsWith = data != None and data.startswith(bytes(text, Esp8266.BYTES_ENCODING))
         
         if flush:
-            self._flushRx()    
+            self._flushRx()
             
         return startsWith
     

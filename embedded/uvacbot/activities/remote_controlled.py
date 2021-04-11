@@ -309,7 +309,22 @@ class RemoteControlledActivity(object):
             
             await self._motion.turnTo(angleRad)
             
+    
+    async def _dispatchTurnCmd(self, params):
+        
+        if params != None and len(params) >= 2:
             
+            angle = float(params[0]) if params != "" else 0.0
+            unit = params[1].lower()
+            
+            if unit == "d": #the angle comes as degrees
+                angleRad = radians(angle)
+            else: #the angle comes as radians
+                angleRad = angle
+            
+            await self._motion.turn(angleRad)
+            
+    
     async def _dispatchForwardsToCmd(self, params):
         
         if params != None and len(params) >= 1:
@@ -353,8 +368,11 @@ class RemoteControlledActivity(object):
             elif cmdCode == "TRI":
                 await self._dispatchTurnRightCmd(cmdParams)
                 
-            elif cmdCode.startswith("TRT"):
+            elif cmdCode == "TRT":
                 await self._dispatchTurnToCmd(cmdParams)
+                
+            elif cmdCode == "TRN":
+                await self._dispatchTurnCmd(cmdParams)
                 
             elif cmdCode == "FWT":
                 await self._dispatchForwardsToCmd(cmdParams)
