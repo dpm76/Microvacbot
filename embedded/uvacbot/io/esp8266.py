@@ -407,6 +407,14 @@ class Esp8266(object):
             
         assert line != None and "OK" in line
         
+        
+    def _closeClient(self, clientId):
+        
+        self._disableRxIrq()
+        self._write("AT+CIPCLOSE={0}".format(clientId))
+        assert self._isOk()
+        self._enableRxIrq()        
+        
     
     def getTimeout(self):
         '''
@@ -554,8 +562,9 @@ class Esp8266(object):
                     elif contents[1]==b"CLOSED":
                         #Client gone
                         clientId = int(contents[0])
-                        self._connections[clientId].onClose()
-                        del self._connections[clientId]
+                        if clientId in self._connections.keys():
+                            self._connections[clientId].onClose()
+                            del self._connections[clientId]
                 
 
 class Connection(object):
@@ -596,6 +605,11 @@ class Connection(object):
         '''
         
         self._module._send(self._clientId, message)
+        
+        
+    def close(self):
+        
+        self._module._closeClient(self._clientId)
         
         
     def receiveSync(self, timeout=0):
