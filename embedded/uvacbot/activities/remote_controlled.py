@@ -17,7 +17,8 @@ class _RemoteConnection(Connection):
         
         cmd = message.strip()
         if cmd != "":
-            await self._extraObj.dispatchCommand(cmd)
+            response = await self._extraObj.dispatchCommand(cmd)
+            self.send("{0}\r\n".format(response))
                     
 
 class RemoteControlledActivity(object):
@@ -356,41 +357,52 @@ class RemoteControlledActivity(object):
             cmdCode = cmdArgs[0].upper()
             cmdParams = cmdArgs[1:]
             
-            if cmdCode == "FWD":
-                await self._dispatchForwardsCmd(cmdParams)
-                
-            elif cmdCode == "BAK":
-                await self._dispatchBackwardsCmd(cmdParams)
-                
-            elif cmdCode == "TLE":
-                await self._dispatchTurnLeftCmd(cmdParams)
-                
-            elif cmdCode == "TRI":
-                await self._dispatchTurnRightCmd(cmdParams)
-                
-            elif cmdCode == "TRT":
-                await self._dispatchTurnToCmd(cmdParams)
-                
-            elif cmdCode == "TRN":
-                await self._dispatchTurnCmd(cmdParams)
-                
-            elif cmdCode == "FWT":
-                await self._dispatchForwardsToCmd(cmdParams)
+            try:
             
-            elif cmdCode == "BKT":
-                await self._dispatchBackwardsToCmd(cmdParams)
+                if cmdCode == "FWD":
+                    await self._dispatchForwardsCmd(cmdParams)
+                    
+                elif cmdCode == "BAK":
+                    await self._dispatchBackwardsCmd(cmdParams)
+                    
+                elif cmdCode == "TLE":
+                    await self._dispatchTurnLeftCmd(cmdParams)
+                    
+                elif cmdCode == "TRI":
+                    await self._dispatchTurnRightCmd(cmdParams)
+                    
+                elif cmdCode == "TRT":
+                    await self._dispatchTurnToCmd(cmdParams)
+                    
+                elif cmdCode == "TRN":
+                    await self._dispatchTurnCmd(cmdParams)
+                    
+                elif cmdCode == "FWT":
+                    await self._dispatchForwardsToCmd(cmdParams)
                 
-            elif cmdCode.startswith("STO"):
-                self._dispatchStopCmd(cmdParams)
+                elif cmdCode == "BKT":
+                    await self._dispatchBackwardsToCmd(cmdParams)
+                    
+                elif cmdCode.startswith("STO"):
+                    self._dispatchStopCmd(cmdParams)
+                    
+                elif cmdCode.startswith("EXP"):
+                    await self._dispatchExpression(cmdParams)
+                    
+                elif cmdCode.startswith("LMX"):
+                    self._dispatchLedMatrixCmd(cmdParams)
+                    
+                elif cmdCode.startswith("BUZ"):
+                    self._dispatchBuzzCmd(cmdParams)
+                    
+                else:
+                    raise Exception("Unknown command")
                 
-            elif cmdCode.startswith("EXP"):
-                await self._dispatchExpression(cmdParams)
+                response = "{0}:OK".format(cmdCode)
+            
+            except Exception as ex:
                 
-            elif cmdCode.startswith("LMX"):
-                self._dispatchLedMatrixCmd(cmdParams)
-                
-            elif cmdCode.startswith("BUZ"):
-                self._dispatchBuzzCmd(cmdParams)
-                
-            else:
                 self._stopAndClear()
+                response = "{0}:ERROR:{1}".format(cmdCode, str(ex).replace(":",";"))
+                
+            return response
