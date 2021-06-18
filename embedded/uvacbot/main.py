@@ -52,7 +52,7 @@ def main():
     # Add activities here:
         
     robot.addActivity(RandomMotionActivity(motion, distanceSensor)) #.setObstacleLed(pyb.LED(3))
-    robot.addActivity(RemoteControlledActivity(motion, esp))
+    robot.addActivity(RemoteControlledActivity(motion, esp, distanceSensor))
     robot.addActivity(MusicalInstrumentActivity(distanceSensor))
     
     try:

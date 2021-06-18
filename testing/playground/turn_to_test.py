@@ -50,7 +50,7 @@ async def mainTask(mc):
 
 def main():
         
-    print("Turn test")
+    print("Turn_to test")
     
     #20210218 DPM: The code of this example is configured for the NUCLEO-L746RG board.
     #              Please, adapt according to the actual configuration.

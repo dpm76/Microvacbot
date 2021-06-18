@@ -80,7 +80,7 @@ class RemoteControlledActivity(object):
         lambda self: Sequencer(self._buzzer).play("3cdeg.4b3d")
     ]
     
-    def __init__(self, motion, esp):
+    def __init__(self, motion, esp, distanceSensor):
         
         self._motion = motion
         self._motion.setRotation(RemoteControlledActivity.ROTATION_THROTTLE)
@@ -116,7 +116,9 @@ class RemoteControlledActivity(object):
                 self._esp.setAccessPointConfig(RemoteControlledActivity.NETWORK_AP_SSID)
             #TODO 20200725 DPM Get IP Address on AP-mode from settings
             self._esp.setApIpAddress(RemoteControlledActivity.NETWORK_AP_IP, RemoteControlledActivity.NETWORK_AP_IP)
-         
+        
+        self._distanceSensor = distanceSensor
+        
         self._isrunning = False
         
         self._ledMatrix = None
@@ -344,7 +346,12 @@ class RemoteControlledActivity(object):
         
     def _dispatchStopCmd(self, params):
         
-        self._stopAndClear()        
+        self._stopAndClear()
+        
+        
+    def _dispatchGetDistanceCmd(self, params):
+        
+        return self._distanceSensor.read()
                 
     
     async def dispatchCommand(self, message):
@@ -358,6 +365,7 @@ class RemoteControlledActivity(object):
             cmdParams = cmdArgs[1:]
             
             try:
+                result = None
             
                 if cmdCode == "FWD":
                     await self._dispatchForwardsCmd(cmdParams)
@@ -395,10 +403,13 @@ class RemoteControlledActivity(object):
                 elif cmdCode.startswith("BUZ"):
                     self._dispatchBuzzCmd(cmdParams)
                     
+                elif cmdCode == "DST":
+                    result = int(round(self._dispatchGetDistanceCmd(cmdParams), 0))
+                    
                 else:
                     raise Exception("Unknown command")
                 
-                response = "{0}:OK".format(cmdCode)
+                response = "{0}:OK".format(cmdCode) if result == None else "{0}:OK:{1}".format(cmdCode, result)
             
             except Exception as ex:
                 
