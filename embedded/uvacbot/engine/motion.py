@@ -28,6 +28,8 @@ class MotionController(object):
     DEFAULT_TURN_ACCURACY = radians(5)
     DEFAULT_TURN_CHECK_PERIOD = const(20) # ms
     
+    PI2 = 2*pi
+    
 
     def __init__(self, mpu, driver, pidkp, pidki, pidkd):
         '''
@@ -122,14 +124,14 @@ class MotionController(object):
     async def turnTo(self, rads):
         '''
         Turns to a concrete angle
-        @param rads: Target angle as radians
+        @param rads: Target angle as radians in clockwise direction
         '''
-                        
-        pi2 = 2*pi
-        rads = rads % pi2
+        
+        #20210611 DPM MPU's turning direction is counterclockwise, but the expected one is clockwise
+        rads = (MotionController.PI2 - rads) % MotionController.PI2
         
         curAngle = self._readMpu()[0]
-        diff = modularDiff(rads, curAngle, pi2)
+        diff = modularDiff(rads, curAngle, MotionController.PI2)
         if  diff > 0:
             self.turnRight()
         elif diff <= 0:
@@ -138,7 +140,7 @@ class MotionController(object):
         #TODO: 20210217 DPM: Cancel while-loop on stop from another task
         while abs(diff) > MotionController.DEFAULT_TURN_ACCURACY:
             curAngle = self._readMpu()[0]
-            diff = modularDiff(rads, curAngle, pi2)
+            diff = modularDiff(rads, curAngle, MotionController.PI2)
             await sleep_ms(MotionController.DEFAULT_TURN_CHECK_PERIOD)
         
         self.stop()
@@ -147,10 +149,11 @@ class MotionController(object):
     async def turn(self, rads):
         '''
         Turns to a relative angle based on the current orientation
-        @param rads: Angle as radians
+        @param rads: Angle as radians in clockwise direction
         '''
         
-        await self.turnTo((self._readMpu()[0] + rads) % (2*pi))
+        currentAngle = MotionController.PI2 - self._readMpu()[0]
+        await self.turnTo(currentAngle + rads)
         
    
     def stop(self):
