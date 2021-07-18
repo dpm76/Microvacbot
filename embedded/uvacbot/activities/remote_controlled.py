@@ -27,8 +27,8 @@ class RemoteControlledActivity(object):
     # (128KB, but ~80KB free running Micropython+uasyncio), code shall reduce its memory consumption.
     
     #TODO: 20200624 DPM Get network options from settings
-    NETWORK_AP_ENABLED = False
-    NETWORK_CLIENT_MODE_ENABLED = True
+    NETWORK_AP_ENABLED = True
+    NETWORK_CLIENT_MODE_ENABLED = False
     
     NETWORK_AP_SSID = "Microvacbot_AP"
     NETWORK_AP_PASSWD = ""
@@ -85,7 +85,6 @@ class RemoteControlledActivity(object):
         self._motion.setRotation(RemoteControlledActivity.ROTATION_THROTTLE)
         
         self._esp = esp
-        self._esp.start()
         assert self._esp.isPresent()
         #TODO: 20200511 DPM Move ESP module initialization to the robot-class
         opmode = 0

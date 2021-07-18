@@ -47,10 +47,11 @@ def main():
     
     #TODO: 20200918 DPM Move the wifi-module initialization to the robot-class
     esp = Esp8266(3, Pin.board.D3, 115200, debug=True)
+    esp.start()
+    
     robot = Robot()
     
     # Add activities here:
-        
     robot.addActivity(RandomMotionActivity(motion, distanceSensor)) #.setObstacleLed(pyb.LED(3))
     robot.addActivity(RemoteControlledActivity(motion, esp))
     robot.addActivity(MusicalInstrumentActivity(distanceSensor))
