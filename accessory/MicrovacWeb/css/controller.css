@@ -1,0 +1,19 @@
+.button-set{
+    margin: 0 auto;
+    width: max-content;
+}
+
+.button-cell{
+    width: 3em;
+    height: 3em;
+    display: grid;
+    margin: 0.1em;
+}
+
+.button-row{
+    display: flex;
+}
+
+.button-cell button{
+    font-size: larger;
+}

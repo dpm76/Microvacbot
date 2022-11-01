@@ -1,0 +1,2 @@
+json-rpc==1.13.0
+Werkzeug==1.0.1
